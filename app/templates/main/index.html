@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Dashboard</h1>
+
+    <div style="display: flex; gap: 20px;">
+        <div border="1" style="padding: 10px; border: 1px solid black;">
+            <h3>Total Admitted Patients</h3>
+            <p>{{ total_patients }}</p>
+        </div>
+        <div border="1" style="padding: 10px; border: 1px solid black;">
+            <h3>Admissions Today</h3>
+            <p>{{ admissions_today }}</p>
+        </div>
+        <div border="1" style="padding: 10px; border: 1px solid black;">
+            <h3>Transfers Today</h3>
+            <p>{{ transfers_today }}</p>
+        </div>
+        <div border="1" style="padding: 10px; border: 1px solid black;">
+            <h3>Discharges Today</h3>
+            <p>{{ discharges_today }}</p>
+        </div>
+    </div>
+
+    <h2>Ward Occupancy</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Ward Name</th>
+                <th>Type</th>
+                <th>Capacity</th>
+                <th>Current Patients</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ward in wards %}
+                <tr>
+                    <td>{{ ward.name }}</td>
+                    <td>{{ ward.type }}</td>
+                    <td>{{ ward.capacity if ward.capacity else 'N/A' }}</td>
+                    <td>{{ ward.patients|length }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+    <div>
+        <a href="{{ url_for('patients.list_patients') }}">Manage Patients</a> |
+        <a href="{{ url_for('wards.list_wards') }}">View Wards</a>
+        {% if current_user.is_authenticated and current_user.role_obj.name == 'Admin' %}
+            | <a href="{{ url_for('auth.manage_users') }}">Manage Users</a>
+        {% endif %}
+    </div>
+{% endblock %}

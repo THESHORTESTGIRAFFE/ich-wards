@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Patients</h1>
+    <a href="{{ url_for('patients.register_patient') }}">Register New Patient</a>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Status</th>
+                <th>Current Ward</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in patients %}
+                <tr>
+                    <td>{{ patient.name }}</td>
+                    <td>{{ patient.age }}</td>
+                    <td>{{ patient.gender }}</td>
+                    <td>{{ patient.status }}</td>
+                    <td>{{ patient.current_ward.name if patient.current_ward else 'None' }}</td>
+                    <td>
+                        {% if patient.status != 'Admitted' and patient.status != 'Discharged' %}
+                            <a href="{{ url_for('patients.admit_patient', patient_id=patient.id) }}">Admit</a>
+                        {% endif %}
+                        {% if patient.status == 'Admitted' %}
+                            {% if current_user.role_obj.name in ['Admin', 'CMO', 'Sister In Charge'] %}
+                                <a href="{{ url_for('transfers.transfer_patient', patient_id=patient.id) }}">Transfer</a>
+                            {% endif %}
+                            {% if patient.current_ward.type == 'Discharge' %}
+                                <a href="{{ url_for('patients.discharge_patient', patient_id=patient.id) }}">Discharge</a>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

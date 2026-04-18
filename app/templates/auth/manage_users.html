@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Manage Users</h1>
+    <a href="{{ url_for('auth.create_user') }}">Create New User</a>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Ward</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role_obj.name }}</td>
+                    <td>{{ user.ward_obj.name if user.ward_obj else 'None' }}</td>
+                    <td>
+                        <a href="{{ url_for('auth.update_user', user_id=user.id) }}">Edit</a>
+                        <form action="{{ url_for('auth.delete_user', user_id=user.id) }}" method="POST" style="display:inline;">
+                            <input type="submit" value="Delete" onclick="return confirm('Are you sure?')">
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
