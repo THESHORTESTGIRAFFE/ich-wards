@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Reports</h1>
+
+    <form method="GET" action="{{ url_for('reports.view_reports') }}">
+        <label for="type">Report Type:</label>
+        <select name="type" id="type">
+            <option value="admissions" {% if report_type == 'admissions' %}selected{% endif %}>Admissions</option>
+            <option value="transfers" {% if report_type == 'transfers' %}selected{% endif %}>Transfers</option>
+            <option value="discharges" {% if report_type == 'discharges' %}selected{% endif %}>Discharges</option>
+        </select>
+
+        <label for="start_date">Start Date:</label>
+        <input type="date" name="start_date" id="start_date" value="{{ request.args.get('start_date', '') }}">
+
+        <label for="end_date">End Date:</label>
+        <input type="date" name="end_date" id="end_date" value="{{ request.args.get('end_date', '') }}">
+
+        <input type="submit" value="Filter">
+    </form>
+
+    <hr>
+
+    <h3>{{ report_type|capitalize }} Log</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Patient</th>
+                {% if report_type == 'admissions' %}
+                    <th>Ward</th>
+                    <th>Admitted By</th>
+                {% elif report_type == 'transfers' %}
+                    <th>From Ward</th>
+                    <th>To Ward</th>
+                    <th>Transferred By</th>
+                {% elif report_type == 'discharges' %}
+                    <th>Ward</th>
+                    <th>Discharged By</th>
+                    <th>Notes</th>
+                {% endif %}
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in results %}
+                <tr>
+                    <td>{{ row.patient.name }}</td>
+                    {% if report_type == 'admissions' %}
+                        <td>{{ row.ward.name }}</td>
+                        <td>{{ row.user.name }}</td>
+                    {% elif report_type == 'transfers' %}
+                        <td>{{ row.from_ward.name }}</td>
+                        <td>{{ row.to_ward.name }}</td>
+                        <td>{{ row.user.name }}</td>
+                    {% elif report_type == 'discharges' %}
+                        <td>{{ row.ward.name }}</td>
+                        <td>{{ row.user.name }}</td>
+                        <td>{{ row.notes }}</td>
+                    {% endif %}
+                    <td>{{ row.timestamp }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

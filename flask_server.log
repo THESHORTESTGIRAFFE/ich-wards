@@ -1,0 +1,25 @@
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [18/Apr/2026 08:29:16] "GET /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:17] "[32mPOST /auth/login HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Apr/2026 08:29:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:18] "GET /patient/register HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:19] "[32mPOST /patient/register HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Apr/2026 08:29:19] "GET /patients HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:20] "GET /patients HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:21] "GET /patient/1/admit HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:21] "[32mPOST /patient/1/admit HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Apr/2026 08:29:21] "GET /patients HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:22] "GET /patient/1/transfer HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:23] "[32mPOST /patient/1/transfer HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Apr/2026 08:29:23] "GET /patients HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:24] "GET /patient/1/transfer HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:25] "[32mPOST /patient/1/transfer HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Apr/2026 08:29:25] "GET /patients HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:26] "GET /patient/1/discharge HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:27] "[32mPOST /patient/1/discharge HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Apr/2026 08:29:27] "GET /patients HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:28] "GET /reports?type=admissions HTTP/1.1" 200 -
+127.0.0.1 - - [18/Apr/2026 08:29:29] "GET / HTTP/1.1" 200 -

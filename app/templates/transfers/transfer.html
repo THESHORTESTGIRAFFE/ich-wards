@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Transfer Patient: {{ patient.name }}</h1>
+    <p>Current Ward: {{ patient.current_ward.name }}</p>
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.to_ward.label }}<br>
+            {{ form.to_ward() }}
+            {% for error in form.to_ward.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
+{% endblock %}
