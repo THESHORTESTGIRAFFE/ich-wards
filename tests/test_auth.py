@@ -1,4 +1,5 @@
 import pytest
+from werkzeug.security import generate_password_hash as werkzeug_generate_password_hash
 from app import create_app, db, bcrypt
 from app.models.models import User, Role, Ward
 from config import Config
@@ -40,6 +41,21 @@ def test_login(client):
     response = client.post('/auth/login', data=dict(
         email='admin@test.com',
         password='admin123'
+    ), follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Logout' in response.data
+
+def test_login_with_scrypt_password(client, app):
+    with app.app_context():
+        nurse_role = Role.query.filter_by(name='Nurse').first()
+        hashed_pw = werkzeug_generate_password_hash('secret123', method='scrypt')
+        scrypt_user = User(name='Scrypt User', email='scrypt@test.com', password_hash=hashed_pw, role_id=nurse_role.id)
+        db.session.add(scrypt_user)
+        db.session.commit()
+
+    response = client.post('/auth/login', data=dict(
+        email='scrypt@test.com',
+        password='secret123'
     ), follow_redirects=True)
     assert response.status_code == 200
     assert b'Logout' in response.data

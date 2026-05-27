@@ -1,41 +1,157 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <span>Patients</span>
+{% endblock %}
 {% block content %}
-    <h1>Patients</h1>
-    <a href="{{ url_for('patients.register_patient') }}">Register New Patient</a>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Gender</th>
-                <th>Status</th>
-                <th>Current Ward</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for patient in patients %}
-                <tr>
-                    <td>{{ patient.name }}</td>
-                    <td>{{ patient.age }}</td>
-                    <td>{{ patient.gender }}</td>
-                    <td>{{ patient.status }}</td>
-                    <td>{{ patient.current_ward.name if patient.current_ward else 'None' }}</td>
-                    <td>
-                        {% if patient.status != 'Admitted' and patient.status != 'Discharged' %}
-                            <a href="{{ url_for('patients.admit_patient', patient_id=patient.id) }}">Admit</a>
-                        {% endif %}
-                        {% if patient.status == 'Admitted' %}
-                            {% if current_user.role_obj.name in ['Admin', 'CMO', 'Sister In Charge'] %}
-                                <a href="{{ url_for('transfers.transfer_patient', patient_id=patient.id) }}">Transfer</a>
-                            {% endif %}
-                            {% if patient.current_ward.type == 'Discharge' %}
-                                <a href="{{ url_for('patients.discharge_patient', patient_id=patient.id) }}">Discharge</a>
-                            {% endif %}
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="page-header flex-between" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1 class="page-title">Patient Management</h1>
+            <p class="page-subtitle">Track and manage all patients in the system</p>
+        </div>
+        <a href="{{ url_for('patients.register_patient') }}" class="btn btn-success">
+            <i class="fas fa-user-plus"></i> Register Patient
+        </a>
+    </div>
+    
+    <!-- Search and Filter Bar -->
+    <div class="card no-print" style="margin-bottom: 2rem;">
+        <form method="GET" action="{{ url_for('patients.list_patients') }}" class="card-body" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+                <label for="search" class="form-label"><i class="fas fa-search"></i> Search Patients</label>
+                <input type="text" name="search" id="search" class="form-control" placeholder="Search by name or hospital ID..." value="{{ search }}">
+            </div>
+            <div class="form-group" style="width: 200px; margin-bottom: 0;">
+                <label for="status" class="form-label"><i class="fas fa-filter"></i> Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Statuses</option>
+                    <option value="Registered" {% if status == 'Registered' %}selected{% endif %}>Registered</option>
+                    <option value="Admitted" {% if status == 'Admitted' %}selected{% endif %}>Admitted</option>
+                    <option value="Transferred" {% if status == 'Transferred' %}selected{% endif %}>Transferred</option>
+                    <option value="Discharged" {% if status == 'Discharged' %}selected{% endif %}>Discharged</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                {% if search or status %}
+                    <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Reset
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% if patients %}
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-id-card"></i> Hospital ID</th>
+                            <th><i class="fas fa-user"></i> Name</th>
+                            <th><i class="fas fa-birthday-cake"></i> Age</th>
+                            <th><i class="fas fa-venus-mars"></i> Sex</th>
+                            <th><i class="fas fa-info-circle"></i> Status</th>
+                            <th><i class="fas fa-hospital-user"></i> Current Ward</th>
+                            <th style="width: 180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                            <tr class="clickable-row" onclick="if(event.target.closest('a, button, form')) return; window.location='{{ url_for('patients.view_patient', patient_id=patient.id) }}';">
+                                <td>
+                                    <span class="font-semibold badge badge-info">{{ patient.hospital_id }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('patients.view_patient', patient_id=patient.id) }}" class="font-semibold link-primary" style="text-decoration: none; color: inherit;">
+                                        {{ patient.surname }}, {{ patient.first_names }}
+                                    </a>
+                                </td>
+                                <td>{{ patient.age }} years</td>
+                                <td>
+                                    {% if patient.sex == 'Male' %}
+                                        <span><i class="fas fa-mars" style="color: #3b82f6;"></i> Male</span>
+                                    {% elif patient.sex == 'Female' %}
+                                        <span><i class="fas fa-venus" style="color: #ec4899;"></i> Female</span>
+                                    {% else %}
+                                        <span>{{ patient.sex }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if patient.status == 'Admitted' %}
+                                        <span class="badge status-admitted"><i class="fas fa-check-circle"></i> Admitted</span>
+                                    {% elif patient.status == 'Transferred' %}
+                                        <span class="badge status-transferred"><i class="fas fa-exchange-alt"></i> Transferred</span>
+                                    {% elif patient.status == 'Discharged' %}
+                                        <span class="badge status-discharged"><i class="fas fa-check"></i> Discharged</span>
+                                    {% else %}
+                                        <span class="badge badge-neutral">{{ patient.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if patient.current_ward %}
+                                        <span class="badge badge-success">{{ patient.current_ward.name }}</span>
+                                    {% else %}
+                                        <span class="badge badge-neutral">Not Assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        {% if patient.status != 'Discharged' %}
+                                            {% if patient.status == 'Registered' %}
+                                                <a href="{{ url_for('patients.admit_patient', patient_id=patient.id) }}" class="btn btn-sm btn-primary" title="Admit Patient">
+                                                    <i class="fas fa-sign-in-alt"></i> Admit
+                                                </a>
+                                            {% elif patient.status == 'Admitted' or patient.status == 'Transferred' %}
+                                                {% if current_user.role_obj.name in ['Admin', 'CMO', 'Sister In Charge'] %}
+                                                    {% if patient.current_ward and patient.current_ward.type != 'Discharge' %}
+                                                        <a href="{{ url_for('transfers.transfer_patient', patient_id=patient.id) }}" class="btn btn-sm btn-warning" title="Transfer Patient">
+                                                            <i class="fas fa-exchange-alt"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                {% endif %}
+                                                {% if patient.current_ward and patient.current_ward.type == 'Discharge' %}
+                                                    <a href="{{ url_for('patients.discharge_patient', patient_id=patient.id) }}" class="btn btn-sm btn-danger" title="Discharge Patient">
+                                                        <i class="fas fa-sign-out-alt"></i>
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                            <a href="{{ url_for('patients.view_patient', patient_id=patient.id) }}" class="btn btn-sm btn-secondary" title="View Patient">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('patients.patient_history', patient_id=patient.id) }}" class="btn btn-sm btn-secondary" title="View History">
+                                                <i class="fas fa-history"></i>
+                                            </a>
+                                            {% if current_user.role_obj.name == 'Admin' and patient.status != 'Admitted' %}
+                                                <form action="{{ url_for('patients.delete_patient', patient_id=patient.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this patient?');">
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Remove Patient" style="padding: 0.375rem 0.6rem;">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center p-6" style="text-align: center;">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; display: block;"></i>
+                <h3 style="color: #6b7280; margin-bottom: 0.5rem;">No patients found</h3>
+                <p style="color: #9ca3af; margin-bottom: 1rem;">Start by registering a new patient</p>
+                <a href="{{ url_for('patients.register_patient') }}" class="btn btn-success">
+                    <i class="fas fa-user-plus"></i> Register First Patient
+                </a>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

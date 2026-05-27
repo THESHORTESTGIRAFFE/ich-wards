@@ -1,18 +1,75 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+    <span>/</span>
+    <span>Transfer</span>
+{% endblock %}
 {% block content %}
-    <h1>Transfer Patient: {{ patient.name }}</h1>
-    <p>Current Ward: {{ patient.current_ward.name }}</p>
-    <form method="POST" action="">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.to_ward.label }}<br>
-            {{ form.to_ward() }}
-            {% for error in form.to_ward.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-exchange-alt"></i> Transfer Patient
+        </h1>
+        <p class="page-subtitle">Move patient to another ward</p>
+    </div>
+
+    <div style="max-width: 700px;">
+        <!-- Patient Info Card -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <h2 class="card-title">Patient Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-2" style="gap: 1.5rem;">
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Full Name</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">{{ patient.name }}</p>
+                    </div>
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Current Status</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">
+                            <span class="badge status-admitted"><i class="fas fa-check-circle"></i> Admitted</span>
+                        </p>
+                    </div>
+                    <div style="grid-column: 1/-1;">
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Current Ward</p>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="padding: 1rem; background: #f3f4f6; border-radius: 0.5rem;">
+                                <p class="font-bold" style="font-size: 1.125rem;">{{ patient.current_ward.name }}</p>
+                                <p style="color: #6b7280; font-size: 0.875rem;">{{ patient.current_ward.type }} Ward</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-            {{ form.submit() }}
+
+        <!-- Transfer Form -->
+        <div class="card">
+            <form method="POST" action="" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="to_ward" class="form-label">
+                            <i class="fas fa-arrow-right"></i> Transfer To Ward
+                        </label>
+                        {{ form.to_ward(class="form-control" + (" form-error" if form.to_ward.errors else "")) }}
+                        {% if form.to_ward.errors %}
+                            {% for error in form.to_ward.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="form-text">Select the destination ward for this patient</p>
+                    </div>
+                </div>
+
+                <div class="card-footer" style="display: flex; gap: 1rem; justify-content: space-between;">
+                    {{ form.submit(class="btn btn-warning") }}
+                    <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 {% endblock %}

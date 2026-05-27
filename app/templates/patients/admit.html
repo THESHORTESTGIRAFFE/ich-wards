@@ -1,17 +1,78 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+    <span>/</span>
+    <span>Admission</span>
+{% endblock %}
 {% block content %}
-    <h1>Admit Patient: {{ patient.name }}</h1>
-    <form method="POST" action="">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.ward.label }}<br>
-            {{ form.ward() }}
-            {% for error in form.ward.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-sign-in-alt"></i> Admit Patient
+        </h1>
+        <p class="page-subtitle">Register patient admission into hospital</p>
+    </div>
+
+    <div style="max-width: 700px;">
+        <!-- Patient Info Card -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <h2 class="card-title">Patient Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-2" style="gap: 1.5rem;">
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Full Name</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">{{ patient.name }}</p>
+                    </div>
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Age</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">{{ patient.age }} years</p>
+                    </div>
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Gender</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">
+                            {% if patient.gender == 'M' %}
+                                <i class="fas fa-mars" style="color: #3b82f6;"></i> Male
+                            {% else %}
+                                <i class="fas fa-venus" style="color: #ec4899;"></i> Female
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">National ID</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">{{ patient.national_id }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-            {{ form.submit() }}
+
+        <!-- Admission Form -->
+        <div class="card">
+            <form method="POST" action="" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="ward" class="form-label">
+                            <i class="fas fa-hospital-user"></i> Select Admission Ward
+                        </label>
+                        {{ form.ward(class="form-control" + (" form-error" if form.ward.errors else "")) }}
+                        {% if form.ward.errors %}
+                            {% for error in form.ward.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="form-text">Choose the ward where this patient will be admitted</p>
+                    </div>
+                </div>
+
+                <div class="card-footer" style="display: flex; gap: 1rem; justify-content: space-between;">
+                    {{ form.submit(class="btn btn-success") }}
+                    <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 {% endblock %}

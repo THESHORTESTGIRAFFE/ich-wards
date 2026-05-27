@@ -1,12 +1,18 @@
 from flask import render_template, url_for, flash, redirect, request, Blueprint
 from urllib.parse import urlparse, urljoin
 from flask_login import login_user, current_user, logout_user, login_required
+from werkzeug.security import check_password_hash as werkzeug_check_password_hash
 from app import db, bcrypt
 from app.models.models import User, Role, Ward
 from app.auth.forms import LoginForm, UserRegistrationForm, UserUpdateForm
 from app.auth.utils import role_required
 
 auth = Blueprint('auth', __name__)
+
+def verify_password_hash(stored_hash, password):
+    if stored_hash.startswith(('$2a$', '$2b$', '$2y$')):
+        return bcrypt.check_password_hash(stored_hash, password)
+    return werkzeug_check_password_hash(stored_hash, password)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -15,7 +21,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
+        if user and verify_password_hash(user.password_hash, form.password.data):
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             if not next_page or urlparse(next_page).netloc != '':

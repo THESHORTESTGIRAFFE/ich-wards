@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block title %}Import Database{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto; margin-top: 2rem;">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-file-import"></i> Import Database</h2>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-4">
+            Upload the exported database file from Microsoft Access. Supported formats include CSV and Excel (.xlsx, .xls).
+            <br><br>
+            <strong>Note:</strong> You mentioned you will provide the exact columns expected. Currently, this process will read the file and preview the data. The exact mapping logic will be finalized once the columns are provided.
+        </p>
+
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.file.label(class="form-label") }}
+                {{ form.file(class="form-control") }}
+                {% for error in form.file.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mt-4">
+                {{ form.submit(class="btn btn-primary btn-block") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

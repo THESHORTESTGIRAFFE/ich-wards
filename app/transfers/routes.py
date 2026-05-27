@@ -29,6 +29,11 @@ def transfer_patient(patient_id):
     if form.validate_on_submit():
         from_ward_id = patient.ward_id
         to_ward_id = form.to_ward.data
+        to_ward = Ward.query.get(to_ward_id)
+
+        if to_ward.is_full:
+            flash(f'Destination ward {to_ward.name} is currently at full capacity ({to_ward.capacity}).', 'danger')
+            return redirect(url_for('transfers.transfer_patient', patient_id=patient_id))
 
         patient.ward_id = to_ward_id
         transfer = Transfer(

@@ -1,38 +1,528 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+    <span>/</span>
+    <span>Register</span>
+{% endblock %}
 {% block content %}
-    <h1>Register Patient</h1>
-    <form method="POST" action="">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.name.label }}<br>
-            {{ form.name(size=32) }}
-            {% for error in form.name.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.age.label }}<br>
-            {{ form.age() }}
-            {% for error in form.age.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.gender.label }}<br>
-            {{ form.gender() }}
-            {% for error in form.gender.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.national_id.label }}<br>
-            {{ form.national_id(size=32) }}
-            {% for error in form.national_id.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.submit() }}
-        </div>
-    </form>
+    <div class="page-header">
+        <h1 class="page-title">Register New Patient</h1>
+        <p class="page-subtitle">Add a new patient to the mental health hospital system</p>
+    </div>
+
+    <div class="registration-container">
+        <form method="POST" action="" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- PERSONAL INFORMATION SECTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-title"><i class="fas fa-user"></i> Personal Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <!-- Surname -->
+                        <div class="form-group">
+                            <label for="surname" class="form-label required">
+                                <i class="fas fa-pen"></i> Surname
+                            </label>
+                            {{ form.surname(class="form-control" + (" form-error" if form.surname.errors else ""), placeholder="Enter surname", autocomplete="family-name") }}
+                            {% if form.surname.errors %}
+                                {% for error in form.surname.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- First Names -->
+                        <div class="form-group">
+                            <label for="first_names" class="form-label required">
+                                <i class="fas fa-pen"></i> First Name(s)
+                            </label>
+                            {{ form.first_names(class="form-control" + (" form-error" if form.first_names.errors else ""), placeholder="Enter first name(s)", autocomplete="given-name") }}
+                            {% if form.first_names.errors %}
+                                {% for error in form.first_names.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <!-- Date of Birth -->
+                        <div class="form-group">
+                            <label for="date_of_birth" class="form-label required">
+                                <i class="fas fa-calendar"></i> Date of Birth
+                            </label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" 
+                                   value="{{ form.date_of_birth.data.strftime('%Y-%m-%d') if form.date_of_birth.data else '' }}" required>
+                            <small class="helper-text">Please select the patient's date of birth</small>
+                            {% if form.date_of_birth.errors %}
+                                {% for error in form.date_of_birth.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Sex -->
+                        <div class="form-group">
+                            <label for="sex" class="form-label required">
+                                <i class="fas fa-venus-mars"></i> Sex
+                            </label>
+                            {{ form.sex(class="form-control" + (" form-error" if form.sex.errors else "")) }}
+                            {% if form.sex.errors %}
+                                {% for error in form.sex.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <!-- Race -->
+                        <div class="form-group">
+                            <label for="race" class="form-label required">
+                                <i class="fas fa-users"></i> Race/Ethnicity
+                            </label>
+                            {{ form.race(class="form-control" + (" form-error" if form.race.errors else "")) }}
+                            {% if form.race.errors %}
+                                {% for error in form.race.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Marital Status -->
+                        <div class="form-group">
+                            <label for="marital_status" class="form-label required">
+                                <i class="fas fa-heart"></i> Marital Status
+                            </label>
+                            {{ form.marital_status(class="form-control" + (" form-error" if form.marital_status.errors else "")) }}
+                            {% if form.marital_status.errors %}
+                                {% for error in form.marital_status.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="occupation" class="form-label required">
+                            <i class="fas fa-briefcase"></i> Occupation
+                        </label>
+                        {{ form.occupation(class="form-control" + (" form-error" if form.occupation.errors else "")) }}
+                        {% if form.occupation.errors %}
+                            {% for error in form.occupation.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTACT INFORMATION SECTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-title"><i class="fas fa-address-card"></i> Contact Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="residential_address" class="form-label required">
+                            <i class="fas fa-home"></i> Residential Address
+                        </label>
+                        {{ form.residential_address(class="form-control" + (" form-error" if form.residential_address.errors else ""), placeholder="Enter complete residential address", rows="3") }}
+                        {% if form.residential_address.errors %}
+                            {% for error in form.residential_address.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact_number" class="form-label required">
+                            <i class="fas fa-phone"></i> Contact Number
+                        </label>
+                        {{ form.contact_number(class="form-control" + (" form-error" if form.contact_number.errors else ""), placeholder="Enter phone number (e.g., +256701234567)", autocomplete="tel") }}
+                        {% if form.contact_number.errors %}
+                            {% for error in form.contact_number.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- EMPLOYER INFORMATION SECTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-title"><i class="fas fa-building"></i> Employer Information <span class="optional-label">(Optional)</span></h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="employer_name" class="form-label">
+                            <i class="fas fa-user-tie"></i> Employer Name
+                        </label>
+                        {{ form.employer_name(class="form-control" + (" form-error" if form.employer_name.errors else ""), placeholder="Enter employer name (if applicable)") }}
+                        {% if form.employer_name.errors %}
+                            {% for error in form.employer_name.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="employer_address" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Employer Address
+                        </label>
+                        {{ form.employer_address(class="form-control" + (" form-error" if form.employer_address.errors else ""), placeholder="Enter employer address", rows="2") }}
+                        {% if form.employer_address.errors %}
+                            {% for error in form.employer_address.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEXT OF KIN INFORMATION SECTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-title"><i class="fas fa-users"></i> Next of Kin Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <!-- Next of Kin Name -->
+                        <div class="form-group">
+                            <label for="next_of_kin_name" class="form-label required">
+                                <i class="fas fa-pen"></i> Name
+                            </label>
+                            {{ form.next_of_kin_name(class="form-control" + (" form-error" if form.next_of_kin_name.errors else ""), placeholder="Enter next of kin's name") }}
+                            {% if form.next_of_kin_name.errors %}
+                                {% for error in form.next_of_kin_name.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Next of Kin Relationship -->
+                        <div class="form-group">
+                            <label for="next_of_kin_relationship" class="form-label required">
+                                <i class="fas fa-link"></i> Relationship
+                            </label>
+                            {{ form.next_of_kin_relationship(class="form-control" + (" form-error" if form.next_of_kin_relationship.errors else "")) }}
+                            {% if form.next_of_kin_relationship.errors %}
+                                {% for error in form.next_of_kin_relationship.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="next_of_kin_address" class="form-label required">
+                            <i class="fas fa-map-marker-alt"></i> Address
+                        </label>
+                        {{ form.next_of_kin_address(class="form-control" + (" form-error" if form.next_of_kin_address.errors else ""), placeholder="Enter next of kin's address", rows="2") }}
+                        {% if form.next_of_kin_address.errors %}
+                            {% for error in form.next_of_kin_address.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMISSION INFORMATION SECTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-title"><i class="fas fa-hospital-user"></i> Admission Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <!-- Admission Date & Time -->
+                        <div class="form-group">
+                            <label for="admission_datetime" class="form-label required">
+                                <i class="fas fa-calendar-check"></i> Admission Date & Time
+                            </label>
+                            <input type="datetime-local" id="admission_datetime" name="admission_datetime" class="form-control"
+                                   value="{{ form.admission_datetime.data.strftime('%Y-%m-%dT%H:%M') if form.admission_datetime.data else '' }}" required>
+                            <small class="helper-text">Click to select date and time of admission</small>
+                            {% if form.admission_datetime.errors %}
+                                {% for error in form.admission_datetime.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Referring Doctor/Hospital -->
+                        <div class="form-group">
+                            <label for="referring_doctor_hospital" class="form-label required">
+                                <i class="fas fa-user-md"></i> Referring Doctor/Hospital
+                            </label>
+                            {{ form.referring_doctor_hospital(class="form-control" + (" form-error" if form.referring_doctor_hospital.errors else "")) }}
+                            {% if form.referring_doctor_hospital.errors %}
+                                {% for error in form.referring_doctor_hospital.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEDICAL INFORMATION SECTION -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-title"><i class="fas fa-stethoscope"></i> Medical Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="diagnosis" class="form-label required">
+                            <i class="fas fa-clipboard"></i> Diagnosis
+                        </label>
+                        {{ form.diagnosis(class="form-control" + (" form-error" if form.diagnosis.errors else ""), placeholder="Enter patient's diagnosis", rows="4") }}
+                        <small class="helper-text">Please provide a detailed diagnosis of the patient's condition</small>
+                        {% if form.diagnosis.errors %}
+                            {% for error in form.diagnosis.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <!-- Doctor Name -->
+                        <div class="form-group">
+                            <label for="doctor_name" class="form-label required">
+                                <i class="fas fa-user-md"></i> Doctor Name (Handling Patient)
+                            </label>
+                            {{ form.doctor_name(class="form-control" + (" form-error" if form.doctor_name.errors else ""), placeholder="Enter doctor's name") }}
+                            {% if form.doctor_name.errors %}
+                                {% for error in form.doctor_name.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Consultant Name -->
+                        <div class="form-group">
+                            <label for="consultant_name" class="form-label required">
+                                <i class="fas fa-user-md"></i> Consultant Name
+                            </label>
+                            {{ form.consultant_name(class="form-control" + (" form-error" if form.consultant_name.errors else "")) }}
+                            {% if form.consultant_name.errors %}
+                                {% for error in form.consultant_name.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pharmacy_name" class="form-label required">
+                            <i class="fas fa-pills"></i> Pharmacy Name
+                        </label>
+                        {{ form.pharmacy_name(class="form-control" + (" form-error" if form.pharmacy_name.errors else "")) }}
+                        {% if form.pharmacy_name.errors %}
+                            {% for error in form.pharmacy_name.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="form-actions">
+                {{ form.submit(class="btn btn-primary btn-lg") }}
+                <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <style>
+        .registration-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+        }
+
+        .card {
+            margin-bottom: 2rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            background: #fff;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .optional-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            font-weight: 400;
+            margin-left: auto;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-control.form-error {
+            border-color: #e74c3c;
+        }
+
+        .form-control.form-error:focus {
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+        }
+
+        .form-control[type="date"],
+        .form-control[type="datetime-local"] {
+            cursor: pointer;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .helper-text {
+            display: block;
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+            font-style: italic;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .btn-lg {
+            padding: 1rem 2.5rem;
+            font-size: 1.05rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .registration-container {
+                margin: 1rem;
+            }
+
+            .card {
+                margin-bottom: 1.5rem;
+            }
+
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
 {% endblock %}

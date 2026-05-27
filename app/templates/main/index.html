@@ -1,54 +1,252 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>Dashboard</h1>
+    <div class="dashboard-banner">
+        <img src="{{ url_for('static', filename='images/logo_banner.png') }}" alt="Ingutsheni Central Hospital Banner">
+    </div>
+    <p class="dashboard-banner-text">A centralized platform for patient admissions, ward capacity tracking, and compassionate mental health care coordination across the hospital.</p>
 
-    <div style="display: flex; gap: 20px;">
-        <div border="1" style="padding: 10px; border: 1px solid black;">
-            <h3>Total Admitted Patients</h3>
-            <p>{{ total_patients }}</p>
+    <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Real-time hospital ward management overview</p>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-4" style="margin-bottom: 2rem;">
+        <div class="stat-card primary">
+            <div class="stat-label">Total Admitted Patients</div>
+            <div class="stat-value">{{ total_patients }}</div>
+            <div class="stat-footer"><i class="fas fa-users-bed"></i> Active patients</div>
         </div>
-        <div border="1" style="padding: 10px; border: 1px solid black;">
-            <h3>Admissions Today</h3>
-            <p>{{ admissions_today }}</p>
+        <div class="stat-card success">
+            <div class="stat-label">Admissions Today</div>
+            <div class="stat-value">{{ admissions_today }}</div>
+            <div class="stat-footer"><i class="fas fa-calendar-day"></i> New entries</div>
         </div>
-        <div border="1" style="padding: 10px; border: 1px solid black;">
-            <h3>Transfers Today</h3>
-            <p>{{ transfers_today }}</p>
+        <div class="stat-card warning">
+            <div class="stat-label">Transfers Today</div>
+            <div class="stat-value">{{ transfers_today }}</div>
+            <div class="stat-footer"><i class="fas fa-exchange-alt"></i> Ward moves</div>
         </div>
-        <div border="1" style="padding: 10px; border: 1px solid black;">
-            <h3>Discharges Today</h3>
-            <p>{{ discharges_today }}</p>
+        <div class="stat-card danger">
+            <div class="stat-label">Discharges Today</div>
+            <div class="stat-value">{{ discharges_today }}</div>
+            <div class="stat-footer"><i class="fas fa-sign-out-alt"></i> Exits</div>
         </div>
     </div>
 
-    <h2>Ward Occupancy</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Ward Name</th>
-                <th>Type</th>
-                <th>Capacity</th>
-                <th>Current Patients</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for ward in wards %}
-                <tr>
-                    <td>{{ ward.name }}</td>
-                    <td>{{ ward.type }}</td>
-                    <td>{{ ward.capacity if ward.capacity else 'N/A' }}</td>
-                    <td>{{ ward.patients|length }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Ward Occupancy -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-hospital-user"></i> Ward Occupancy Status
+            </h2>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-building"></i> Ward Name</th>
+                        <th><i class="fas fa-tag"></i> Type</th>
+                        <th><i class="fas fa-bed"></i> Capacity</th>
+                        <th><i class="fas fa-users"></i> Current Patients</th>
+                        <th style="width: 200px;">Occupancy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ward in wards %}
+                        {% set patient_count = ward.patients|length %}
+                        {% set capacity = ward.capacity or 10 %}
+                        {% set occupancy_percent = ((patient_count / capacity) * 100)|int %}
+                        <tr>
+                            <td>
+                                <span class="font-semibold">{{ ward.name }}</span>
+                            </td>
+                            <td>
+                                {% if ward.type == 'Admission' %}
+                                    <span class="badge badge-info">
+                                        <i class="fas fa-sign-in-alt"></i> Admission
+                                    </span>
+                                {% elif ward.type == 'Discharge' %}
+                                    <span class="badge badge-danger">
+                                        <i class="fas fa-sign-out-alt"></i> Discharge
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-success">
+                                        <i class="fas fa-hospital-user"></i> General
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ capacity }}</td>
+                            <td>
+                                <span class="badge badge-primary">{{ patient_count }}/{{ capacity }}</span>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="width: 100%; height: 8px; background-color: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                                        <div style="width: {{ occupancy_percent }}%; height: 100%; background: {% if occupancy_percent >= 90 %}#dc2626{% elif occupancy_percent >= 70 %}#f59e0b{% else %}#16a34a{% endif %}; border-radius: 4px; transition: all 0.3s ease;"></div>
+                                    </div>
+                                    <span style="font-size: 0.875rem; font-weight: 600; color: #6b7280; min-width: 40px;">{{ occupancy_percent }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    <hr>
-    <div>
-        <a href="{{ url_for('patients.list_patients') }}">Manage Patients</a> |
-        <a href="{{ url_for('wards.list_wards') }}">View Wards</a>
-        {% if current_user.is_authenticated and current_user.role_obj.name == 'Admin' %}
-            | <a href="{{ url_for('auth.manage_users') }}">Manage Users</a>
-        {% endif %}
+    <!-- Analytics & Charts -->
+    <div class="grid grid-2" style="margin-top: 2rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-line"></i> 7-Day Activity Trends
+                </h2>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-pie"></i> Ward Occupancy & Status
+                </h2>
+            </div>
+            <div class="card-body" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                <div style="width: 45%; min-width: 200px;">
+                    <canvas id="wardChart"></canvas>
+                </div>
+                <div style="width: 45%; min-width: 200px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ chart_labels|tojson }},
+                    datasets: [
+                        {
+                            label: 'Admissions',
+                            data: {{ chart_admissions|tojson }},
+                            borderColor: '#16a34a',
+                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Discharges',
+                            data: {{ chart_discharges|tojson }},
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            const wardCtx = document.getElementById('wardChart').getContext('2d');
+            new Chart(wardCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ ward_labels|tojson }},
+                    datasets: [{
+                        data: {{ ward_occupancy_data|tojson }},
+                        backgroundColor: [
+                            '#0ea5e9', '#16a34a', '#f59e0b', '#dc2626', '#8b5cf6', '#ec4899', '#14b8a6'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: { display: true, text: 'Ward Occupancy' }
+                    }
+                }
+            });
+
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'pie',
+                data: {
+                    labels: {{ status_labels|tojson }},
+                    datasets: [{
+                        data: {{ status_data|tojson }},
+                        backgroundColor: [
+                            '#3b82f6', '#10b981', '#f59e0b', '#ef4444'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: { display: true, text: 'Patient Status' }
+                    }
+                }
+            });
+        });
+    </script>
+
+    <!-- Quick Actions -->
+    <div style="margin-top: 2rem;">
+        <h2 class="page-title" style="font-size: 1.25rem; margin-bottom: 1rem;">
+            <i class="fas fa-flash"></i> Quick Actions
+        </h2>
+        <div class="grid grid-3">
+            <a href="{{ url_for('patients.list_patients') }}" class="card" style="text-decoration: none; text-align: center; padding: 2rem; transition: all 0.2s ease; cursor: pointer;">
+                <div style="font-size: 2.5rem; color: #0369a1; margin-bottom: 1rem;">
+                    <i class="fas fa-users-bed"></i>
+                </div>
+                <h3 style="color: #111827; margin-bottom: 0.5rem; font-size: 1.125rem;">Manage Patients</h3>
+                <p style="color: #6b7280; font-size: 0.9rem;">View and manage all patients</p>
+            </a>
+
+            <a href="{{ url_for('patients.list_patients') }}" class="card" style="text-decoration: none; text-align: center; padding: 2rem; transition: all 0.2s ease; cursor: pointer;">
+                <div style="font-size: 2.5rem; color: #16a34a; margin-bottom: 1rem;">
+                    <i class="fas fa-sign-in-alt"></i>
+                </div>
+                <h3 style="color: #111827; margin-bottom: 0.5rem; font-size: 1.125rem;">Admit Patient</h3>
+                <p style="color: #6b7280; font-size: 0.9rem;">Register new patient admission</p>
+            </a>
+
+            <a href="{{ url_for('patients.list_patients') }}" class="card" style="text-decoration: none; text-align: center; padding: 2rem; transition: all 0.2s ease; cursor: pointer;">
+                <div style="font-size: 2.5rem; color: #f59e0b; margin-bottom: 1rem;">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <h3 style="color: #111827; margin-bottom: 0.5rem; font-size: 1.125rem;">Transfer Patient</h3>
+                <p style="color: #6b7280; font-size: 0.9rem;">Move patient between wards</p>
+            </a>
+        </div>
     </div>
 {% endblock %}

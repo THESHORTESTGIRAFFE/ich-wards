@@ -1,65 +1,187 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <span>Reports</span>
+{% endblock %}
 {% block content %}
-    <h1>Reports</h1>
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-file-chart-line"></i> Reports
+        </h1>
+        <p class="page-subtitle">View and filter hospital operation logs</p>
+    </div>
 
-    <form method="GET" action="{{ url_for('reports.view_reports') }}">
-        <label for="type">Report Type:</label>
-        <select name="type" id="type">
-            <option value="admissions" {% if report_type == 'admissions' %}selected{% endif %}>Admissions</option>
-            <option value="transfers" {% if report_type == 'transfers' %}selected{% endif %}>Transfers</option>
-            <option value="discharges" {% if report_type == 'discharges' %}selected{% endif %}>Discharges</option>
-        </select>
+    <!-- Filter Section -->
+    <div class="card no-print" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <h2 class="card-title">Report Filters</h2>
+        </div>
+        <form method="GET" action="{{ url_for('reports.view_reports') }}" class="card-body">
+            <div class="grid grid-3" style="gap: 1rem;">
+                <div class="form-group">
+                    <label for="type" class="form-label">
+                        <i class="fas fa-filter"></i> Report Type
+                    </label>
+                    <select name="type" id="type" class="form-control">
+                        <option value="admissions" {% if report_type == 'admissions' %}selected{% endif %}>
+                            <i class="fas fa-sign-in-alt"></i> Admissions
+                        </option>
+                        <option value="transfers" {% if report_type == 'transfers' %}selected{% endif %}>
+                            <i class="fas fa-exchange-alt"></i> Transfers
+                        </option>
+                        <option value="discharges" {% if report_type == 'discharges' %}selected{% endif %}>
+                            <i class="fas fa-sign-out-alt"></i> Discharges
+                        </option>
+                        <option value="patients" {% if report_type == 'patients' %}selected{% endif %}>
+                            <i class="fas fa-users"></i> All Patients
+                        </option>
+                        <option value="wards" {% if report_type == 'wards' %}selected{% endif %}>
+                            <i class="fas fa-hospital-alt"></i> All Wards
+                        </option>
+                    </select>
+                </div>
 
-        <label for="start_date">Start Date:</label>
-        <input type="date" name="start_date" id="start_date" value="{{ request.args.get('start_date', '') }}">
+                <div class="form-group">
+                    <label for="start_date" class="form-label">
+                        <i class="fas fa-calendar"></i> Start Date
+                    </label>
+                    <input type="date" name="start_date" id="start_date" class="form-control" value="{{ request.args.get('start_date', '') }}">
+                </div>
 
-        <label for="end_date">End Date:</label>
-        <input type="date" name="end_date" id="end_date" value="{{ request.args.get('end_date', '') }}">
+                <div class="form-group">
+                    <label for="end_date" class="form-label">
+                        <i class="fas fa-calendar"></i> End Date
+                    </label>
+                    <input type="date" name="end_date" id="end_date" class="form-control" value="{{ request.args.get('end_date', '') }}">
+                </div>
+            </div>
 
-        <input type="submit" value="Filter">
-    </form>
+            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filter Results
+                </button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="window.print()" class="btn btn-secondary">
+                        <i class="fas fa-print"></i> Print Report
+                    </button>
+                    <a href="{{ url_for('reports.export_reports', type=report_type, start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="btn btn-success">
+                        <i class="fas fa-file-csv"></i> Export to CSV
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
 
-    <hr>
-
-    <h3>{{ report_type|capitalize }} Log</h3>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Patient</th>
+    <!-- Results Table -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
                 {% if report_type == 'admissions' %}
-                    <th>Ward</th>
-                    <th>Admitted By</th>
+                    <i class="fas fa-sign-in-alt"></i> Admission Logs
                 {% elif report_type == 'transfers' %}
-                    <th>From Ward</th>
-                    <th>To Ward</th>
-                    <th>Transferred By</th>
+                    <i class="fas fa-exchange-alt"></i> Transfer Logs
                 {% elif report_type == 'discharges' %}
-                    <th>Ward</th>
-                    <th>Discharged By</th>
-                    <th>Notes</th>
+                    <i class="fas fa-sign-out-alt"></i> Discharge Logs
+                {% elif report_type == 'patients' %}
+                    <i class="fas fa-users"></i> Patients Report
+                {% elif report_type == 'wards' %}
+                    <i class="fas fa-hospital-alt"></i> Wards Report
                 {% endif %}
-                <th>Timestamp</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in results %}
-                <tr>
-                    <td>{{ row.patient.name }}</td>
-                    {% if report_type == 'admissions' %}
-                        <td>{{ row.ward.name }}</td>
-                        <td>{{ row.user.name }}</td>
-                    {% elif report_type == 'transfers' %}
-                        <td>{{ row.from_ward.name }}</td>
-                        <td>{{ row.to_ward.name }}</td>
-                        <td>{{ row.user.name }}</td>
-                    {% elif report_type == 'discharges' %}
-                        <td>{{ row.ward.name }}</td>
-                        <td>{{ row.user.name }}</td>
-                        <td>{{ row.notes }}</td>
-                    {% endif %}
-                    <td>{{ row.timestamp }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </h2>
+        </div>
+
+        {% if results %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            {% if report_type in ['admissions', 'transfers', 'discharges'] %}
+                                <th><i class="fas fa-user"></i> Patient</th>
+                                {% if report_type == 'admissions' %}
+                                    <th><i class="fas fa-hospital-user"></i> Ward</th>
+                                    <th><i class="fas fa-user-nurse"></i> Admitted By</th>
+                                {% elif report_type == 'transfers' %}
+                                    <th><i class="fas fa-arrow-right"></i> From Ward</th>
+                                    <th><i class="fas fa-arrow-right"></i> To Ward</th>
+                                    <th><i class="fas fa-user-nurse"></i> Transferred By</th>
+                                {% elif report_type == 'discharges' %}
+                                    <th><i class="fas fa-hospital-user"></i> Ward</th>
+                                    <th><i class="fas fa-user-nurse"></i> Discharged By</th>
+                                    <th><i class="fas fa-file-alt"></i> Notes</th>
+                                {% endif %}
+                                <th><i class="fas fa-calendar-alt"></i> Date & Time</th>
+                            {% elif report_type == 'patients' %}
+                                <th><i class="fas fa-user"></i> Patient Name</th>
+                                <th><i class="fas fa-id-card"></i> National ID</th>
+                                <th><i class="fas fa-info-circle"></i> Status</th>
+                                <th><i class="fas fa-hospital-user"></i> Current Ward</th>
+                            {% elif report_type == 'wards' %}
+                                <th><i class="fas fa-hospital-user"></i> Ward Name</th>
+                                <th><i class="fas fa-tag"></i> Type</th>
+                                <th><i class="fas fa-bed"></i> Capacity</th>
+                                <th><i class="fas fa-users"></i> Occupancy</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                            <tr>
+                                {% if report_type in ['admissions', 'transfers', 'discharges'] %}
+                                    <td>
+                                        <span class="font-semibold">{{ row.patient.name }}</span>
+                                    </td>
+                                    {% if report_type == 'admissions' %}
+                                        <td>
+                                            <span class="badge badge-success">{{ row.ward.name }}</span>
+                                        </td>
+                                        <td>{{ row.user.name }}</td>
+                                    {% elif report_type == 'transfers' %}
+                                        <td>
+                                            <span class="badge badge-warning">{{ row.from_ward.name }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-success">{{ row.to_ward.name }}</span>
+                                        </td>
+                                        <td>{{ row.user.name }}</td>
+                                    {% elif report_type == 'discharges' %}
+                                        <td>
+                                            <span class="badge badge-danger">{{ row.ward.name }}</span>
+                                        </td>
+                                        <td>{{ row.user.name }}</td>
+                                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ row.notes if row.notes else 'N/A' }}</td>
+                                    {% endif %}
+                                    <td>{{ row.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                {% elif report_type == 'patients' %}
+                                    <td><span class="font-semibold">{{ row.name }}</span></td>
+                                    <td>{{ row.national_id }}</td>
+                                    <td>
+                                        {% if row.status == 'Admitted' %}
+                                            <span class="badge status-admitted">Admitted</span>
+                                        {% elif row.status == 'Discharged' %}
+                                            <span class="badge status-discharged">Discharged</span>
+                                        {% else %}
+                                            <span class="badge badge-primary">{{ row.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ row.current_ward.name if row.current_ward else 'None' }}</td>
+                                {% elif report_type == 'wards' %}
+                                    <td><span class="font-semibold">{{ row.name }}</span></td>
+                                    <td>{{ row.type }}</td>
+                                    <td>{{ row.capacity if row.capacity else 'N/A' }}</td>
+                                    <td>{{ row.current_occupancy }} {% if row.is_full %}<span class="badge badge-danger ml-2">Full</span>{% endif %}</td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card-body text-center p-6" style="text-align: center;">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; display: block;"></i>
+                <h3 style="color: #6b7280; margin-bottom: 0.5rem;">No records found</h3>
+                <p style="color: #9ca3af;">Try adjusting your filter criteria</p>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

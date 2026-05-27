@@ -1,31 +1,66 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('wards.list_wards') }}">Wards</a>
+    <span>/</span>
+    <span>{{ title }}</span>
+{% endblock %}
 {% block content %}
-    <h1>{{ title }}</h1>
-    <form method="POST" action="">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.name.label }}<br>
-            {{ form.name(size=32) }}
-            {% for error in form.name.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
+    <div class="page-header">
+        <h1 class="page-title">{{ title }}</h1>
+        <p class="page-subtitle">{% if 'Create' in title %}Add a new ward to the hospital system{% else %}Update ward information{% endif %}</p>
+    </div>
+
+    <div style="max-width: 600px;">
+        <div class="card">
+            <form method="POST" action="" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-hospital-user"></i> Ward Name
+                        </label>
+                        {{ form.name(class="form-control" + (" form-error" if form.name.errors else ""), placeholder="Enter ward name") }}
+                        {% if form.name.errors %}
+                            {% for error in form.name.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="type" class="form-label">
+                            <i class="fas fa-tag"></i> Ward Type
+                        </label>
+                        {{ form.type(class="form-control" + (" form-error" if form.type.errors else "")) }}
+                        {% if form.type.errors %}
+                            {% for error in form.type.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="form-text">Select the type of ward (Admission, General, or Discharge)</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="capacity" class="form-label">
+                            <i class="fas fa-bed"></i> Bed Capacity
+                        </label>
+                        {{ form.capacity(class="form-control" + (" form-error" if form.capacity.errors else ""), placeholder="Number of beds", type="number") }}
+                        {% if form.capacity.errors %}
+                            {% for error in form.capacity.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card-footer" style="display: flex; gap: 1rem; justify-content: space-between;">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('wards.list_wards') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
-        <div>
-            {{ form.type.label }}<br>
-            {{ form.type() }}
-            {% for error in form.type.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.capacity.label }}<br>
-            {{ form.capacity() }}
-            {% for error in form.capacity.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.submit() }}
-        </div>
-    </form>
+    </div>
 {% endblock %}

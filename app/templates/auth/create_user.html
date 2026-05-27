@@ -1,54 +1,108 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('auth.manage_users') }}">Users</a>
+    <span>/</span>
+    <span>{{ title }}</span>
+{% endblock %}
 {% block content %}
-    <h1>{{ title }}</h1>
-    <form method="POST" action="">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.name.label }}<br>
-            {{ form.name(size=32) }}
-            {% for error in form.name.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
+    <div class="page-header">
+        <h1 class="page-title">{{ title }}</h1>
+        <p class="page-subtitle">{% if title == 'Create User' %}Add a new staff member to the system{% else %}Update user information and permissions{% endif %}</p>
+    </div>
+
+    <div style="max-width: 600px;">
+        <div class="card">
+            <form method="POST" action="" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-user"></i> Full Name
+                        </label>
+                        {{ form.name(class="form-control" + (" form-error" if form.name.errors else ""), placeholder="Enter full name") }}
+                        {% if form.name.errors %}
+                            {% for error in form.name.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i> Email Address
+                        </label>
+                        {{ form.email(class="form-control" + (" form-error" if form.email.errors else ""), placeholder="Enter email address") }}
+                        {% if form.email.errors %}
+                            {% for error in form.email.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="role" class="form-label">
+                            <i class="fas fa-shield-alt"></i> Role
+                        </label>
+                        {{ form.role(class="form-control" + (" form-error" if form.role.errors else "")) }}
+                        {% if form.role.errors %}
+                            {% for error in form.role.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="form-text">Select the user's role to define their permissions</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ward" class="form-label">
+                            <i class="fas fa-hospital-user"></i> Ward Assignment
+                        </label>
+                        {{ form.ward(class="form-control" + (" form-error" if form.ward.errors else "")) }}
+                        {% if form.ward.errors %}
+                            {% for error in form.ward.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="form-text">Assign the user to a specific ward (if applicable)</p>
+                    </div>
+
+                    {% if form.password %}
+                    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e5e7eb;">
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        {{ form.password(class="form-control" + (" form-error" if form.password.errors else ""), placeholder="Enter password") }}
+                        {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="form-text">Minimum 6 characters required</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label">
+                            <i class="fas fa-check-circle"></i> Confirm Password
+                        </label>
+                        {{ form.confirm_password(class="form-control" + (" form-error" if form.confirm_password.errors else ""), placeholder="Re-enter password") }}
+                        {% if form.confirm_password.errors %}
+                            {% for error in form.confirm_password.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer" style="display: flex; gap: 1rem; justify-content: space-between;">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('auth.manage_users') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
-        <div>
-            {{ form.email.label }}<br>
-            {{ form.email(size=32) }}
-            {% for error in form.email.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.role.label }}<br>
-            {{ form.role() }}
-            {% for error in form.role.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.ward.label }}<br>
-            {{ form.ward() }}
-            {% for error in form.ward.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        {% if form.password %}
-        <div>
-            {{ form.password.label }}<br>
-            {{ form.password(size=32) }}
-            {% for error in form.password.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.confirm_password.label }}<br>
-            {{ form.confirm_password(size=32) }}
-            {% for error in form.confirm_password.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-        <div>
-            {{ form.submit() }}
-        </div>
-    </form>
+    </div>
 {% endblock %}

@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+    <span>/</span>
+    <span>Patient History</span>
+{% endblock %}
+{% block content %}
+    <div class="page-header flex-between" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1 class="page-title">Patient Movement History</h1>
+            <p class="page-subtitle">Historical record for {{ patient.surname }}, {{ patient.first_names }} (ID: {{ patient.hospital_id }})</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button onclick="window.print()" class="btn btn-primary no-print">
+                <i class="fas fa-print"></i> Print History
+            </button>
+            <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary no-print">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Patient Info Summary -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-body">
+            <div class="grid grid-4" style="gap: 1.5rem;">
+                <div>
+                    <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase;">Age</p>
+                    <p class="font-bold">{{ patient.age }} years</p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase;">Gender</p>
+                    <p class="font-bold">{{ patient.sex }}</p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase;">Current Status</p>
+                    <p class="font-bold">
+                        {% if patient.status == 'Admitted' %}
+                            <span class="badge status-admitted">Admitted</span>
+                        {% elif patient.status == 'Discharged' %}
+                            <span class="badge status-discharged">Discharged</span>
+                        {% else %}
+                            <span class="badge badge-neutral">{{ patient.status }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase;">Current Ward</p>
+                    <p class="font-bold">{{ patient.current_ward.name if patient.current_ward else 'None' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-container">
+        {% if events %}
+            {% for event in events %}
+                <div class="card" style="margin-bottom: 1rem; border-left: 4px solid 
+                    {% if event.type == 'Admission' %}#16a34a{% elif event.type == 'Transfer' %}#f59e0b{% else %}#dc2626{% endif %};">
+                    <div class="card-body" style="padding: 1rem 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h3 style="margin: 0; font-size: 1.125rem;">
+                                {% if event.type == 'Admission' %}
+                                    <i class="fas fa-sign-in-alt" style="color: #16a34a;"></i> Admitted to {{ event.ward }}
+                                {% elif event.type == 'Transfer' %}
+                                    <i class="fas fa-exchange-alt" style="color: #f59e0b;"></i> Transferred: {{ event.from_ward }} &rarr; {{ event.to_ward }}
+                                {% elif event.type == 'Discharge' %}
+                                    <i class="fas fa-sign-out-alt" style="color: #dc2626;"></i> Discharged from {{ event.ward }}
+                                {% endif %}
+                            </h3>
+                            <span class="text-muted" style="font-size: 0.875rem;">
+                                <i class="far fa-clock"></i> {{ event.timestamp.strftime('%B %d, %Y - %H:%M') }}
+                            </span>
+                        </div>
+                        <div style="font-size: 0.9375rem; color: #4b5563;">
+                            <p><strong>Performed by:</strong> {{ event.by }}</p>
+                            {% if event.notes %}
+                                <p style="margin-top: 0.5rem; padding: 0.75rem; background: #f9fafb; border-radius: 0.25rem; font-style: italic;">
+                                    "{{ event.notes }}"
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="card p-6 text-center">
+                <p class="text-muted">No historical events recorded for this patient yet.</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

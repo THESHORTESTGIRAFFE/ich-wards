@@ -1,18 +1,90 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+    <span>/</span>
+    <span>Discharge</span>
+{% endblock %}
 {% block content %}
-    <h1>Discharge Patient: {{ patient.name }}</h1>
-    <p>Current Ward: {{ patient.current_ward.name }} ({{ patient.current_ward.type }})</p>
-    <form method="POST" action="">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.notes.label }}<br>
-            {{ form.notes(cols=40, rows=5) }}
-            {% for error in form.notes.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-sign-out-alt"></i> Discharge Patient
+        </h1>
+        <p class="page-subtitle">Complete patient discharge from the hospital</p>
+    </div>
+
+    <div style="max-width: 700px;">
+        <!-- Patient Info Card -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <h2 class="card-title">Patient Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-2" style="gap: 1.5rem;">
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Full Name</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">{{ patient.name }}</p>
+                    </div>
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Current Status</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">
+                            <span class="badge status-admitted"><i class="fas fa-check-circle"></i> Admitted</span>
+                        </p>
+                    </div>
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Current Ward</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">{{ patient.current_ward.name if patient.current_ward else 'N/A' }}</p>
+                    </div>
+                    <div>
+                        <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Ward Type</p>
+                        <p class="font-bold" style="font-size: 1.125rem;">
+                            <span class="badge badge-danger">{{ patient.current_ward.type if patient.current_ward else 'N/A' }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-            {{ form.submit() }}
+
+        <!-- Discharge Form -->
+        <div class="card">
+            <form method="POST" action="" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="discharge_datetime" class="form-label required">
+                            <i class="fas fa-calendar-check"></i> Discharge Date & Time
+                        </label>
+                        <input type="datetime-local" id="discharge_datetime" name="discharge_datetime" class="form-control"
+                               value="{{ form.discharge_datetime.data.strftime('%Y-%m-%dT%H:%M') if form.discharge_datetime.data else '' }}" required>
+                        <small class="helper-text">Click to select the date and time of discharge</small>
+                        {% if form.discharge_datetime.errors %}
+                            {% for error in form.discharge_datetime.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes" class="form-label required">
+                            <i class="fas fa-file-alt"></i> Discharge Notes
+                        </label>
+                        {{ form.notes(class="form-control" + (" form-error" if form.notes.errors else ""), placeholder="Add any discharge notes or medical observations", rows="6") }}
+                        {% if form.notes.errors %}
+                            {% for error in form.notes.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="form-text">Include any relevant medical information for the patient's follow-up care</p>
+                    </div>
+                </div>
+
+                <div class="card-footer" style="display: flex; gap: 1rem; justify-content: space-between;">
+                    {{ form.submit(class="btn btn-danger") }}
+                    <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 {% endblock %}

@@ -1,32 +1,83 @@
 {% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <span>User Management</span>
+{% endblock %}
 {% block content %}
-    <h1>Manage Users</h1>
-    <a href="{{ url_for('auth.create_user') }}">Create New User</a>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Ward</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-                <tr>
-                    <td>{{ user.name }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.role_obj.name }}</td>
-                    <td>{{ user.ward_obj.name if user.ward_obj else 'None' }}</td>
-                    <td>
-                        <a href="{{ url_for('auth.update_user', user_id=user.id) }}">Edit</a>
-                        <form action="{{ url_for('auth.delete_user', user_id=user.id) }}" method="POST" style="display:inline;">
-                            <input type="submit" value="Delete" onclick="return confirm('Are you sure?')">
-                        </form>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="page-header flex-between" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1 class="page-title">User Management</h1>
+            <p class="page-subtitle">Manage system users and their permissions</p>
+        </div>
+        <a href="{{ url_for('auth.create_user') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Create User
+        </a>
+    </div>
+
+    {% if users %}
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-user"></i> Name</th>
+                            <th><i class="fas fa-envelope"></i> Email</th>
+                            <th><i class="fas fa-shield-alt"></i> Role</th>
+                            <th><i class="fas fa-hospital-user"></i> Ward</th>
+                            <th style="width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                            <tr>
+                                <td>
+                                    <div class="flex gap-2" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.75rem;">
+                                            {{ user.name[0].upper() }}
+                                        </div>
+                                        <span class="font-semibold">{{ user.name }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <span class="badge badge-primary">{{ user.role_obj.name }}</span>
+                                </td>
+                                <td>
+                                    {% if user.ward_obj %}
+                                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> {{ user.ward_obj.name }}</span>
+                                    {% else %}
+                                        <span class="badge badge-neutral">Not Assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="{{ url_for('auth.update_user', user_id=user.id) }}" class="btn btn-sm btn-primary" title="Edit user">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ url_for('auth.delete_user', user_id=user.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Delete user">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center p-6" style="text-align: center;">
+                <i class="fas fa-users" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; display: block;"></i>
+                <h3 style="color: #6b7280; margin-bottom: 0.5rem;">No users found</h3>
+                <p style="color: #9ca3af; margin-bottom: 1rem;">Start by creating your first user account</p>
+                <a href="{{ url_for('auth.create_user') }}" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Create First User
+                </a>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

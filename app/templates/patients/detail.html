@@ -1,0 +1,172 @@
+{% extends "layout.html" %}
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+    <span>/</span>
+    <span>Patient Details</span>
+{% endblock %}
+{% block content %}
+    <div class="page-header flex-between" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+        <div>
+            <h1 class="page-title">Patient Details</h1>
+            <p class="page-subtitle">Detailed clinical and admission information for {{ patient.surname }}, {{ patient.first_names }}</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="{{ url_for('patients.patient_history', patient_id=patient.id) }}" class="btn btn-secondary no-print">
+                <i class="fas fa-history"></i> History
+            </a>
+            <a href="{{ url_for('patients.list_patients') }}" class="btn btn-primary no-print">
+                <i class="fas fa-arrow-left"></i> Back to Patients
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-user"></i> Personal Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-2" style="gap: 1rem;">
+                    <div>
+                        <p class="text-sm text-muted">Hospital ID</p>
+                        <p class="font-semibold">{{ patient.hospital_id }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-muted">Status</p>
+                        <p class="font-semibold">{{ patient.status }}</p>
+                    </div>
+                </div>
+                <div class="grid grid-2" style="gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <p class="text-sm text-muted">Name</p>
+                        <p class="font-semibold">{{ patient.surname }}, {{ patient.first_names }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-muted">Age / Sex</p>
+                        <p class="font-semibold">{{ patient.age }} years / {{ patient.sex }}</p>
+                    </div>
+                </div>
+                <div class="grid grid-2" style="gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <p class="text-sm text-muted">Race</p>
+                        <p>{{ patient.race }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-muted">Marital Status</p>
+                        <p>{{ patient.marital_status }}</p>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <p class="text-sm text-muted">Religion</p>
+                    <p>{{ patient.religion or 'Not Provided' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-map-marker-alt"></i> Location & Contact</h2>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Address</p>
+                    <p>{{ patient.residential_address }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Contact Number</p>
+                    <p>{{ patient.contact_number }}</p>
+                </div>
+                <div class="grid grid-3" style="gap: 1rem;">
+                    <div>
+                        <p class="text-sm text-muted">Chief</p>
+                        <p>{{ patient.chief }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-muted">Village</p>
+                        <p>{{ patient.village }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-muted">Tribe</p>
+                        <p>{{ patient.tribe }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-briefcase"></i> Employment & Next of Kin</h2>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Employer</p>
+                    <p>{{ patient.employer_name or 'Not Provided' }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Employer Address</p>
+                    <p>{{ patient.employer_address or 'Not Provided' }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Next of Kin</p>
+                    <p>{{ patient.next_of_kin_name }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Relationship</p>
+                    <p>{{ patient.next_of_kin_relationship }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-muted">Next of Kin Address</p>
+                    <p>{{ patient.next_of_kin_address }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-notes-medical"></i> Admission & Medical Details</h2>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Admission Date & Time</p>
+                    <p>{{ patient.admission_datetime.strftime('%B %d, %Y %H:%M') if patient.admission_datetime else 'Not Set' }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Referring Doctor / Hospital</p>
+                    <p>{{ patient.referring_doctor_hospital }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Primary Doctor</p>
+                    <p>{{ patient.doctor_name }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Consultant</p>
+                    <p>{{ patient.consultant_name }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Pharmacy</p>
+                    <p>{{ patient.pharmacy_name }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-muted">Diagnosis</p>
+                    <p>{{ patient.diagnosis }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if patient.discharge_datetime %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-sign-out-alt"></i> Discharge Information</h2>
+            </div>
+            <div class="card-body">
+                <p class="text-sm text-muted">Discharge Date & Time</p>
+                <p>{{ patient.discharge_datetime.strftime('%B %d, %Y %H:%M') }}</p>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
