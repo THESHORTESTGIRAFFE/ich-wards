@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block title %}Readmit Patient - Search{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+    <span>/</span>
+    <span>Readmit Search</span>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 2rem auto;">
+    <div class="card-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+        <h2 class="card-title" style="color: white; margin: 0; font-size: 1.25rem;"><i class="fas fa-redo"></i> Readmit Existing Patient</h2>
+    </div>
+    <div class="card-body" style="padding: 2rem;">
+        <p class="text-muted" style="margin-bottom: 1.5rem; line-height: 1.6;">
+            If the patient has been admitted to this facility before, enter their existing 6-digit hospital ID below to retrieve their record and begin the readmission process.
+        </p>
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="hospital_id" class="form-label required" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    <i class="fas fa-id-card"></i> Existing Hospital Number
+                </label>
+                {{ form.hospital_id(class="form-control" + (" form-error" if form.hospital_id.errors else ""), placeholder="e.g. 025014", style="font-size: 1.1rem; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 0.375rem;") }}
+                {% if form.hospital_id.errors %}
+                    {% for error in form.hospital_id.errors %}
+                        <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.75rem; border-radius: 0.375rem; color: white; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-search"></i> Find Patient
+                </button>
+                <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary" style="padding: 0.75rem 1.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; color: #475569; background: #f8fafc; text-decoration: none; font-weight: 600; text-align: center;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from app import db, login_manager
 from flask_login import UserMixin
+from sqlalchemy.ext.hybrid import hybrid_property
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -129,6 +130,104 @@ class Patient(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+    @property
+    def name(self):
+        return f"{self.surname}, {self.first_names}"
+
+    @name.setter
+    def name(self, value):
+        if not value:
+            self.surname = ""
+            self.first_names = ""
+            return
+        parts = value.split(',', 1)
+        if len(parts) == 2:
+            # "Surname, Firstname" format
+            self.surname = parts[0].strip()
+            self.first_names = parts[1].strip()
+        else:
+            parts = value.split(' ', 1)
+            if len(parts) == 2:
+                # "Firstname Surname" format
+                self.first_names = parts[0].strip()
+                self.surname = parts[1].strip()
+            else:
+                self.first_names = value
+                self.surname = value
+
+    @property
+    def gender(self):
+        return self.sex
+
+    @gender.setter
+    def gender(self, value):
+        self.sex = value
+
+    @hybrid_property
+    def national_id(self):
+        return self.hospital_id
+
+    @national_id.setter
+    def national_id(self, value):
+        self.hospital_id = value
+
+    @national_id.expression
+    def national_id(cls):
+        return cls.hospital_id
+
+    def __init__(self, **kwargs):
+        from datetime import datetime, date
+        # Handle custom properties first to avoid conflicts
+        name_val = kwargs.pop('name', None)
+        gender_val = kwargs.pop('gender', None)
+        national_id_val = kwargs.pop('national_id', None)
+
+        if 'date_of_birth' not in kwargs:
+            kwargs['date_of_birth'] = date(1990, 1, 1)
+        if 'age' not in kwargs:
+            kwargs['age'] = 30
+        if 'race' not in kwargs:
+            kwargs['race'] = 'Other'
+        if 'marital_status' not in kwargs:
+            kwargs['marital_status'] = 'Single'
+        if 'occupation' not in kwargs:
+            kwargs['occupation'] = 'Other'
+        if 'residential_address' not in kwargs:
+            kwargs['residential_address'] = 'Not Provided'
+        if 'contact_number' not in kwargs:
+            kwargs['contact_number'] = 'Not Provided'
+        if 'next_of_kin_name' not in kwargs:
+            kwargs['next_of_kin_name'] = 'Not Provided'
+        if 'next_of_kin_address' not in kwargs:
+            kwargs['next_of_kin_address'] = 'Not Provided'
+        if 'next_of_kin_relationship' not in kwargs:
+            kwargs['next_of_kin_relationship'] = 'Other'
+        if 'admission_datetime' not in kwargs:
+            kwargs['admission_datetime'] = datetime.now()
+        if 'referring_doctor_hospital' not in kwargs:
+            kwargs['referring_doctor_hospital'] = 'Not Applicable'
+        if 'diagnosis' not in kwargs:
+            kwargs['diagnosis'] = 'Not Provided'
+        if 'doctor_name' not in kwargs:
+            kwargs['doctor_name'] = 'Not Provided'
+        if 'consultant_name' not in kwargs:
+            kwargs['consultant_name'] = 'Not Applicable'
+        if 'pharmacy_name' not in kwargs:
+            kwargs['pharmacy_name'] = 'Not Applicable'
+        if 'hospital_id' not in kwargs and not national_id_val:
+            import random
+            kwargs['hospital_id'] = str(random.randint(25000, 99999)).zfill(6)
+
+        super(Patient, self).__init__(**kwargs)
+
+        # Apply properties via setters
+        if name_val is not None:
+            self.name = name_val
+        if gender_val is not None:
+            self.gender = gender_val
+        if national_id_val is not None:
+            self.national_id = national_id_val
+
     admissions = db.relationship('Admission', backref='patient', lazy=True)
     transfers = db.relationship('Transfer', backref='patient', lazy=True)
     discharges = db.relationship('Discharge', backref='patient', lazy=True)
@@ -163,6 +262,7 @@ class Discharge(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
     ward_id = db.Column(db.Integer, db.ForeignKey('wards.id'), nullable=False)
     discharged_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    discharge_type = db.Column(db.String(20), default='Discharged')  # 'Discharged' or 'Deceased'
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     ward = db.relationship('Ward', foreign_keys=[ward_id])

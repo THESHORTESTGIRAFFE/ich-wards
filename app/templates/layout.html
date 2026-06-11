@@ -369,6 +369,9 @@
                 <li><a href="{{ url_for('patients.list_patients') }}" class="{% if request.endpoint == 'patients.admit_patient' %}active{% endif %}">
                     <i class="fas fa-sign-in-alt"></i> Admission
                 </a></li>
+                <li><a href="{{ url_for('patients.readmit_patient') }}" class="{% if request.endpoint in ['patients.readmit_patient', 'patients.readmit_patient_details'] %}active{% endif %}">
+                    <i class="fas fa-redo"></i> Readmission
+                </a></li>
                 <li><a href="{{ url_for('patients.list_patients') }}" class="{% if request.endpoint == 'transfers.transfer_patient' %}active{% endif %}">
                     <i class="fas fa-exchange-alt"></i> Transfer
                 </a></li>

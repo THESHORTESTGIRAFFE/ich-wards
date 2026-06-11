@@ -53,6 +53,18 @@
 
                 <div class="card-body">
                     <div class="form-group">
+                        <label for="discharge_type" class="form-label required">
+                            <i class="fas fa-sign-out-alt"></i> Reason for Discharge
+                        </label>
+                        {{ form.discharge_type(class="form-control" + (" form-error" if form.discharge_type.errors else "")) }}
+                        {% if form.discharge_type.errors %}
+                            {% for error in form.discharge_type.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
                         <label for="discharge_datetime" class="form-label required">
                             <i class="fas fa-calendar-check"></i> Discharge Date & Time
                         </label>

@@ -113,7 +113,7 @@
                                 <th><i class="fas fa-calendar-alt"></i> Date & Time</th>
                             {% elif report_type == 'patients' %}
                                 <th><i class="fas fa-user"></i> Patient Name</th>
-                                <th><i class="fas fa-id-card"></i> National ID</th>
+                                <th><i class="fas fa-id-card"></i> Hospital ID</th>
                                 <th><i class="fas fa-info-circle"></i> Status</th>
                                 <th><i class="fas fa-hospital-user"></i> Current Ward</th>
                             {% elif report_type == 'wards' %}
@@ -154,7 +154,7 @@
                                     <td>{{ row.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
                                 {% elif report_type == 'patients' %}
                                     <td><span class="font-semibold">{{ row.name }}</span></td>
-                                    <td>{{ row.national_id }}</td>
+                                    <td>{{ row.hospital_id }}</td>
                                     <td>
                                         {% if row.status == 'Admitted' %}
                                             <span class="badge status-admitted">Admitted</span>

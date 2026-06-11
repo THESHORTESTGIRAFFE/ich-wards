@@ -3,10 +3,11 @@ from flask_login import login_required, current_user
 from app import db
 from app.models.models import (Patient, Ward, Admission, Discharge, Transfer, Race, MaritalStatus, 
                               Occupation, ReferringDoctorHospital, Consultant, Pharmacy)
-from app.patients.forms import PatientRegistrationForm, AdmissionForm, DischargeForm, ImportForm
+from app.patients.forms import PatientRegistrationForm, AdmissionForm, DischargeForm, ImportForm, ReadmissionForm, ReadmitPatientForm
 from app.auth.utils import role_required
 import os
 import pandas as pd
+import re
 from datetime import datetime, timezone
 
 patients = Blueprint('patients', __name__)
@@ -27,28 +28,55 @@ def generate_hospital_id():
 @patients.route('/patients')
 @login_required
 def list_patients():
+    page = request.args.get('page', 1, type=int)
+    sort = request.args.get('sort', 'name')
+    order = request.args.get('order', 'asc')
     search = request.args.get('search', '')
     status = request.args.get('status', '')
-    
+
     query = Patient.query.filter_by(is_deleted=False)
-    
+
+    # Nurses & Sister In Charge only see patients in their own ward
+    role = current_user.role_obj.name
+    if role in ['Nurse', 'Sister In Charge']:
+        query = query.filter(Patient.ward_id == current_user.ward_id)
+
     if search:
         query = query.filter(
-            (Patient.surname.ilike(f'%{search}%')) | 
-            (Patient.first_names.ilike(f'%{search}%')) | 
+            (Patient.surname.ilike(f'%{search}%')) |
+            (Patient.first_names.ilike(f'%{search}%')) |
             (Patient.hospital_id.ilike(f'%{search}%'))
         )
-    
+
     if status:
         query = query.filter(Patient.status == status)
-        
-    all_patients = query.all()
-    return render_template('patients/list_patients.html', patients=all_patients, search=search, status=status)
+
+    if sort == 'hospital_id':
+        if order == 'desc':
+            query = query.order_by(Patient.hospital_id.desc())
+        else:
+            query = query.order_by(Patient.hospital_id.asc())
+    else:
+        if order == 'desc':
+            query = query.order_by(Patient.surname.desc(), Patient.first_names.desc())
+        else:
+            query = query.order_by(Patient.surname.asc(), Patient.first_names.asc())
+
+    pagination = query.paginate(page=page, per_page=15, error_out=False)
+    all_patients = pagination.items
+
+    return render_template('patients/list_patients.html', patients=all_patients, pagination=pagination, search=search, status=status, sort=sort, order=order)
 
 @patients.route('/patient/<int:patient_id>')
 @login_required
 def view_patient(patient_id):
     patient = Patient.query.get_or_404(patient_id)
+    # Access control: Nurses and Sisters in Charge can only view patients in their own ward
+    role = current_user.role_obj.name
+    if role in ['Nurse', 'Sister In Charge']:
+        if patient.ward_id != current_user.ward_id or current_user.ward_id is None:
+            flash('You do not have permission to view patients in other wards.', 'danger')
+            return redirect(url_for('patients.list_patients'))
     return render_template('patients/detail.html', patient=patient)
 
 @patients.route('/patient/register', methods=['GET', 'POST'])
@@ -144,54 +172,198 @@ def admit_patient(patient_id):
 @login_required
 def discharge_patient(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    if patient.status != 'Admitted':
+    if patient.status not in ['Admitted', 'Transferred']:
         flash('Only admitted patients can be discharged.', 'warning')
         return redirect(url_for('patients.list_patients'))
 
-    ward = Ward.query.get(patient.ward_id)
-    # Enforce rule: Patients can only be discharged via the Discharge Ward
-    if ward.type != 'Discharge':
-        flash('Patients can only be discharged via the Discharge Ward. Please transfer them to the Discharge Ward first.', 'danger')
+    # RBAC: Sister In Charge and above can discharge
+    role = current_user.role_obj.name
+    if role not in ['Admin', 'CMO', 'Sister In Charge']:
+        flash('You do not have permission to discharge patients.', 'danger')
         return redirect(url_for('patients.list_patients'))
 
+    ward = Ward.query.get(patient.ward_id)
     form = DischargeForm()
     if form.validate_on_submit():
-        patient.status = 'Discharged'
+        discharge_type = form.discharge_type.data  # 'Discharged' or 'Deceased'
+        patient.status = discharge_type  # Sets to 'Discharged' or 'Deceased'
         patient.discharge_datetime = form.discharge_datetime.data
         patient.ward_id = None
         discharge = Discharge(
             patient_id=patient.id,
             ward_id=ward.id,
             discharged_by=current_user.id,
+            discharge_type=discharge_type,
             notes=form.notes.data
         )
         db.session.add(discharge)
         db.session.commit()
-        flash('Patient discharged successfully!', 'success')
+        label = 'marked as deceased' if discharge_type == 'Deceased' else 'discharged'
+        flash(f'Patient {label} successfully!', 'success')
         return redirect(url_for('patients.list_patients'))
 
-    return render_template('patients/discharge.html', title='Discharge Patient', form=form, patient=patient)
+    return render_template('patients/discharge.html', title='Discharge / Deceased', form=form, patient=patient, ward=ward)
 
 @patients.route('/patient/<int:patient_id>/history')
 @login_required
 def patient_history(patient_id):
     patient = Patient.query.get_or_404(patient_id)
-    admissions = Admission.query.filter_by(patient_id=patient_id).order_by(Admission.timestamp.desc()).all()
+    # Access control: Nurses and Sisters in Charge can only view history of patients in their own ward
+    role = current_user.role_obj.name
+    if role in ['Nurse', 'Sister In Charge']:
+        if patient.ward_id != current_user.ward_id or current_user.ward_id is None:
+            flash('You do not have permission to view history of patients in other wards.', 'danger')
+            return redirect(url_for('patients.list_patients'))
+    admissions = Admission.query.filter_by(patient_id=patient_id).order_by(Admission.timestamp.asc()).all()
     transfers = Transfer.query.filter_by(patient_id=patient_id).order_by(Transfer.timestamp.desc()).all()
-    discharges = Discharge.query.filter_by(patient_id=patient_id).order_by(Discharge.timestamp.desc()).all()
-    
-    # Combine and sort all events by timestamp
+    discharges = Discharge.query.filter_by(patient_id=patient_id).order_by(Discharge.timestamp.asc()).all()
+
+    # --- Statistics: Average Length of Stay ---
+    stays = []
+    for adm in admissions:
+        # Match each admission to the next discharge after it
+        matching_discharge = next(
+            (d for d in discharges if d.timestamp >= adm.timestamp), None
+        )
+        if matching_discharge:
+            adm_ts = adm.timestamp.replace(tzinfo=None)
+            dis_ts = matching_discharge.timestamp.replace(tzinfo=None)
+            los = round((dis_ts - adm_ts).total_seconds() / 86400.0, 1)
+            stays.append(max(los, 0.1))  # Ensure at least 0.1 days to avoid 0 for same-day stays
+
+    total_admissions = len(admissions)
+    total_transfers = len(transfers)
+    total_discharges = len(discharges)
+    avg_los = round(sum(stays) / len(stays), 1) if stays else None
+    current_los = None
+    if patient.status == 'Admitted' and admissions:
+        last_adm = admissions[-1]
+        adm_ts = last_adm.timestamp.replace(tzinfo=None)
+        current_los = round((datetime.now(timezone.utc).replace(tzinfo=None) - adm_ts).total_seconds() / 86400.0, 1)
+        current_los = max(current_los, 0.1)
+
+    # Combine and sort all events by timestamp for timeline
     events = []
     for a in admissions:
         events.append({'type': 'Admission', 'timestamp': a.timestamp, 'ward': a.ward.name, 'by': a.user.name})
     for t in transfers:
         events.append({'type': 'Transfer', 'timestamp': t.timestamp, 'from_ward': t.from_ward.name, 'to_ward': t.to_ward.name, 'by': t.user.name})
     for d in discharges:
-        events.append({'type': 'Discharge', 'timestamp': d.timestamp, 'ward': d.ward.name, 'by': d.user.name, 'notes': d.notes})
-        
+        events.append({'type': d.discharge_type or 'Discharge', 'timestamp': d.timestamp, 'ward': d.ward.name, 'by': d.user.name, 'notes': d.notes})
+
     events.sort(key=lambda x: x['timestamp'], reverse=True)
-    
-    return render_template('patients/history.html', patient=patient, events=events)
+
+    stats = {
+        'total_admissions': total_admissions,
+        'total_transfers': total_transfers,
+        'total_discharges': total_discharges,
+        'avg_los': avg_los,
+        'current_los': current_los,
+    }
+
+    return render_template('patients/history.html', patient=patient, events=events, stats=stats)
+
+@patients.route('/patient/readmit', methods=['GET', 'POST'])
+@login_required
+def readmit_patient():
+    """Look up a previously discharged patient by hospital ID for re-admission."""
+    role = current_user.role_obj.name
+    if role not in ['Admin', 'CMO', 'Sister In Charge']:
+        flash('You do not have permission to readmit patients.', 'danger')
+        return redirect(url_for('patients.list_patients'))
+
+    form = ReadmissionForm()
+    if form.validate_on_submit():
+        hosp_id = form.hospital_id.data.strip().zfill(6)
+        found_patient = Patient.query.filter_by(hospital_id=hosp_id, is_deleted=False).first()
+        if not found_patient:
+            flash(f'No patient found with hospital number {hosp_id}.', 'danger')
+        elif found_patient.status in ['Admitted', 'Transferred']:
+            flash(f'Patient {found_patient.surname} is already admitted.', 'warning')
+        else:
+            return redirect(url_for('patients.readmit_patient_details', patient_id=found_patient.id))
+
+    return render_template('patients/readmit.html', title='Find Patient for Readmission', form=form)
+
+@patients.route('/patient/<int:patient_id>/readmit_details', methods=['GET', 'POST'])
+@login_required
+def readmit_patient_details(patient_id):
+    """Update clinical details and admit a previously discharged patient."""
+    role = current_user.role_obj.name
+    if role not in ['Admin', 'CMO', 'Sister In Charge']:
+        flash('You do not have permission to readmit patients.', 'danger')
+        return redirect(url_for('patients.list_patients'))
+
+    patient = Patient.query.get_or_404(patient_id)
+    if patient.status in ['Admitted', 'Transferred']:
+        flash('Patient is already admitted.', 'warning')
+        return redirect(url_for('patients.list_patients'))
+
+    # RBAC: Only Sister In Charge of Admission Wards, or Admin/CMO can admit
+    if current_user.role_obj.name == 'Sister In Charge':
+        if not current_user.ward_id or current_user.ward_obj.type != 'Admission':
+            flash('You are not assigned to an Admission Ward and cannot perform admissions.', 'danger')
+            return redirect(url_for('patients.list_patients'))
+        admission_wards = [current_user.ward_obj]
+    elif current_user.role_obj.name in ['Admin', 'CMO']:
+        admission_wards = Ward.query.filter_by(type='Admission').all()
+    else:
+        flash('You do not have permission to admit patients.', 'danger')
+        return redirect(url_for('patients.list_patients'))
+
+    form = ReadmitPatientForm()
+    form.ward.choices = [(w.id, w.name) for w in admission_wards]
+
+    if form.validate_on_submit():
+        ward_id = form.ward.data
+        ward = Ward.query.get(ward_id)
+
+        if ward.type != 'Admission':
+            flash('Patients can only be admitted via Admission Wards.', 'danger')
+            return redirect(url_for('patients.readmit_patient_details', patient_id=patient.id))
+
+        if ward.is_full:
+            flash(f'Ward {ward.name} is currently at full capacity ({ward.capacity}). Please transfer or discharge a patient before admitting more.', 'danger')
+            return redirect(url_for('patients.readmit_patient_details', patient_id=patient.id))
+
+        try:
+            # Update Patient details
+            patient.status = 'Admitted'
+            patient.ward_id = ward_id
+            patient.discharge_datetime = None
+            patient.admission_datetime = form.admission_datetime.data
+            patient.referring_doctor_hospital = ReferringDoctorHospital.query.get(form.referring_doctor_hospital.data).name
+            patient.diagnosis = form.diagnosis.data
+            patient.doctor_name = form.doctor_name.data
+            patient.consultant_name = Consultant.query.get(form.consultant_name.data).name
+            patient.pharmacy_name = Pharmacy.query.get(form.pharmacy_name.data).name
+
+            # Log Admission
+            admission = Admission(patient_id=patient.id, ward_id=ward_id, admitted_by=current_user.id)
+            db.session.add(admission)
+            db.session.commit()
+            flash(f'Patient {patient.name} has been readmitted to {ward.name} successfully!', 'success')
+            return redirect(url_for('patients.list_patients'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error during readmission: {str(e)}', 'danger')
+
+    elif request.method == 'GET':
+        form.admission_datetime.data = datetime.now()
+        form.diagnosis.data = patient.diagnosis
+        form.doctor_name.data = patient.doctor_name
+        
+        ref = ReferringDoctorHospital.query.filter_by(name=patient.referring_doctor_hospital).first()
+        if ref:
+            form.referring_doctor_hospital.data = ref.id
+        cons = Consultant.query.filter_by(name=patient.consultant_name).first()
+        if cons:
+            form.consultant_name.data = cons.id
+        pharm = Pharmacy.query.filter_by(name=patient.pharmacy_name).first()
+        if pharm:
+            form.pharmacy_name.data = pharm.id
+
+    return render_template('patients/readmit_details.html', title='Readmit Patient', form=form, patient=patient)
 
 @patients.route('/patient/<int:patient_id>/delete', methods=['POST'])
 @login_required
@@ -201,10 +373,10 @@ def delete_patient(patient_id):
     if patient.status == 'Admitted':
         flash('Cannot delete a patient who is currently admitted. Please discharge them first.', 'danger')
         return redirect(url_for('patients.list_patients'))
-    
+
     patient.is_deleted = True
     db.session.commit()
-    flash(f'Patient {patient.name} has been removed from the active system.', 'success')
+    flash(f'Patient {patient.surname} has been removed from the active system.', 'success')
     return redirect(url_for('patients.list_patients'))
 
 @patients.route('/patients/import', methods=['GET', 'POST'])
@@ -222,79 +394,175 @@ def import_database():
                 df = pd.read_csv(file)
             else:
                 df = pd.read_excel(file)
+
+            # Normalize column names to lowercase for case-insensitive matching
+            # Normalize column names: lowercase, strip and remove non-alphanumeric
+            # This helps match headers like "HOSPITAL NUMBER", "NEXT OF KIN AND NAME", etc.
+            orig_cols = list(df.columns)
+            normalized = []
+            for c in orig_cols:
+                if isinstance(c, str):
+                    norm = re.sub(r'[^0-9a-z]', '', c.strip().lower())
+                else:
+                    norm = str(c)
+                normalized.append(norm)
+            df.columns = normalized
                 
             # Map to Patient models
             success_count = 0
             skipped_count = 0
+            error_count = 0
             for index, row in df.iterrows():
                 try:
-                    def get_val(col_names, default=None):
+                    def get_val(col_names, default='Not Provided'):
+                        """Robust column lookup using normalized column names.
+                        `col_names` may contain variants like 'hospital number' or 'hospital_id'.
+                        Returns `default` if not found or blank.
+                        """
                         for c in col_names:
-                            if c in df.columns and pd.notna(row[c]) and str(row[c]).strip():
-                                return str(row[c]).strip()
+                            if not isinstance(c, str):
+                                continue
+                            cand = re.sub(r'[^0-9a-z]', '', c.strip().lower())
+                            if cand in df.columns:
+                                val = row[cand]
+                                if pd.notna(val) and str(val).strip() and str(val).strip() != '-':
+                                    return str(val).strip()
                         return default
 
-                    hospital_id = get_val(['hospital name', 'hospital_id', 'Hospital Name', 'Hospital ID', 'Hospital Number', 'hospital number'])
+                    hospital_id = get_val(['hospital number', 'hospital_id', 'hospital name', 'hospital id'], None)
                     
                     if not hospital_id:
                         skipped_count += 1
                         continue
+
+                    # Pad hospital_id to 6 digits
+                    hospital_id = str(hospital_id).strip().zfill(6)
                         
                     # Check if already exists
                     if Patient.query.filter_by(hospital_id=hospital_id).first():
                         skipped_count += 1
                         continue
 
-                    surname = get_val(['surname', 'Surname']) or 'Missing'
-                    first_names = get_val(['name(s)', 'first_names', 'Name', 'First Name']) or 'Missing'
-                    dob_str = get_val(['date of birth', 'DOB', 'Date of Birth'])
-                    dob = pd.to_datetime(dob_str).date() if dob_str else datetime.now().date()
-                    age_str = get_val(['age', 'Age'])
-                    age = int(float(age_str)) if age_str and str(age_str).replace('.','',1).isdigit() else 0
-                    sex = get_val(['sex', 'Sex', 'Gender']) or 'Missing'
-                    race = get_val(['race', 'Race']) or 'Not Applicable'
-                    marital_status = get_val(['marital status', 'Marital Status']) or 'Not Applicable'
-                    occupation = get_val(['occupation', 'Occupation']) or 'Not Applicable'
-                    residential_address = get_val(['residential address', 'Residential Address']) or 'Missing'
-                    contact_number = get_val(['contact number', 'Contact Number']) or 'Missing'
-                    employer_address = get_val(["employer's name and address", 'Employer Address']) or 'Missing'
-                    next_of_kin_address = get_val(['next of kin name and address', 'Next of Kin Address']) or 'Missing'
-                    relationship = get_val(['relationship', 'Relationship']) or 'Missing'
-                    religion = get_val(['religion', 'Religion'], 'Not Applicable')
-                    chief = get_val(['chief', 'Chief'], 'Not Applicable')
-                    village = get_val(['village', 'Village'], 'Not Applicable')
-                    tribe = get_val(['tribe', 'Tribe'], 'Not Applicable')
-                    referring = get_val(['Name of Doctor/Referring Hospital', 'Referring Hospital']) or 'Not Applicable'
-                    pharmacy = get_val(['name of pharmacy', 'Pharmacy']) or 'Not Applicable'
-                    consultant = get_val(['name of consultant', 'Consultant']) or 'Not Applicable'
-                    handling_doctor = get_val(['name of doctor', 'Doctor']) or 'Not Applicable'
-                    diagnosis = get_val(['Diagnosis of patient', 'Diagnosis']) or 'Missing'
+                    surname = get_val(['surname'], 'Not Provided')
+                    first_names = get_val(['name', 'name(s)', 'first_names', 'first name'], 'Not Provided')
                     
-                    admission_dt_str = get_val(['admission date and time', 'Admission Date'])
-                    admission_dt = pd.to_datetime(admission_dt_str).to_pydatetime() if admission_dt_str else datetime.now()
+                    # Parse date of birth - handle various formats
+                    dob_str = get_val(['date of birth', 'dob'], None)
+                    dob = None
+                    age = 0
+                    if dob_str:
+                        try:
+                            dob = pd.to_datetime(dob_str, dayfirst=True, errors='coerce')
+                            if pd.notna(dob):
+                                dob = dob.date()
+                                age = datetime.now().year - dob.year
+                            else:
+                                # Try parsing just a year
+                                try:
+                                    year = int(float(dob_str))
+                                    if 1900 <= year <= 2030:
+                                        from datetime import date
+                                        dob = date(year, 1, 1)
+                                        age = datetime.now().year - year
+                                    else:
+                                        dob = None
+                                except (ValueError, TypeError):
+                                    dob = None
+                        except Exception:
+                            dob = None
+                    
+                    if dob is None:
+                        from datetime import date
+                        dob = date(1900, 1, 1)
+                        age = 0
 
-                    discharge_dt_str = get_val(['date and time of discharge, transfer, or death', 'Discharge Date'])
-                    discharge_dt = pd.to_datetime(discharge_dt_str).to_pydatetime() if discharge_dt_str else None
+                    sex_raw = get_val(['sex', 'gender'], 'Other')
+                    # Map M/F to Male/Female
+                    sex_map = {'m': 'Male', 'f': 'Female', 'male': 'Male', 'female': 'Female'}
+                    sex = sex_map.get(sex_raw.lower(), sex_raw if sex_raw != 'Not Provided' else 'Other')
 
-                    # If they don't exist in the dropdown tables, add them!
+                    race_raw = get_val(['race'], 'Other')
+                    # Map common codes
+                    race_map = {'a': 'African', 'c': 'Caucasian', 'asian': 'Asian', 'african': 'African', 'caucasian': 'Caucasian'}
+                    race = race_map.get(race_raw.lower(), race_raw if race_raw != 'Not Provided' else 'Other')
+
+                    marital_status = get_val(['marital status'], 'Not Applicable')
+                    occupation_raw = get_val(['occupation'], 'Not Applicable')
+                    # Map common abbreviations
+                    occ_map = {'u/e': 'Unemployed', 'nil': 'Unemployed', 'n/a': 'Not Applicable'}
+                    occupation = occ_map.get(occupation_raw.lower(), occupation_raw)
+
+                    residential_address = get_val(['address', 'residential address'], 'Not Provided')
+                    contact_number = get_val(['contact number', 'phone'], 'Not Provided')
+                    
+                    next_of_kin_name = get_val(['next of kin and name', 'next of kin name'], 'Not Provided')
+                    next_of_kin_address = get_val(['next of kin address'], 'Not Provided')
+                    # Extract phone from next_of_kin_address if present
+                    
+                    religion = get_val(['religion'], 'Not Applicable')
+                    religion_map = {'unknown': 'Not Applicable'}
+                    religion = religion_map.get(religion.lower(), religion)
+
+                    chief = get_val(['chief'], 'Not Applicable')
+                    village = get_val(['village'], 'Not Applicable')
+                    tribe = get_val(['tribe'], 'Not Applicable')
+
+                    referring = get_val(['name of doctor/referring hospital', 'referring hospital', 'referring doctor hospital'], 'Not Applicable')
+                    pharmacy = get_val(['name of pharmacy', 'pharmacy'], 'Not Applicable')
+                    consultant = get_val(['name of consultant', 'consultant'], 'Not Applicable')
+                    handling_doctor = get_val(['name of doctor', 'doctor', 'doctor_name'], 'Not Applicable')
+                    diagnosis = get_val(['diagnosis', 'diagnosis of patient'], 'Not Provided')
+                    
+                    # Parse admission date
+                    admission_dt_str = get_val(['date of admission', 'admission date', 'admission date and time'], None)
+                    admission_dt = None
+                    if admission_dt_str:
+                        try:
+                            admission_dt = pd.to_datetime(admission_dt_str, dayfirst=True, errors='coerce')
+                            if pd.notna(admission_dt):
+                                admission_dt = admission_dt.to_pydatetime()
+                            else:
+                                admission_dt = None
+                        except Exception:
+                            admission_dt = None
+                    if admission_dt is None:
+                        admission_dt = datetime.now()
+
+                    # Parse discharge date
+                    discharge_dt_str = get_val(['date of discharge', 'discharge date', 'date and time of discharge, transfer, or death'], None)
+                    discharge_dt = None
+                    if discharge_dt_str:
+                        # Remove annotations like "(ABSENTIA)" before parsing
+                        clean_dt = re.sub(r'\(.*?\)', '', discharge_dt_str).strip()
+                        if clean_dt:
+                            try:
+                                discharge_dt = pd.to_datetime(clean_dt, dayfirst=True, errors='coerce')
+                                if pd.notna(discharge_dt):
+                                    discharge_dt = discharge_dt.to_pydatetime()
+                                else:
+                                    discharge_dt = None
+                            except Exception:
+                                discharge_dt = None
+
+                    # Auto-add to lookup tables if they don't exist
                     if not Race.query.filter_by(name=race).first():
                         db.session.add(Race(name=race))
-                        db.session.commit()
+                        db.session.flush()
                     if not MaritalStatus.query.filter_by(name=marital_status).first():
                         db.session.add(MaritalStatus(name=marital_status))
-                        db.session.commit()
+                        db.session.flush()
                     if not Occupation.query.filter_by(name=occupation).first():
                         db.session.add(Occupation(name=occupation))
-                        db.session.commit()
+                        db.session.flush()
                     if not ReferringDoctorHospital.query.filter_by(name=referring).first():
                         db.session.add(ReferringDoctorHospital(name=referring, type='Hospital'))
-                        db.session.commit()
+                        db.session.flush()
                     if not Consultant.query.filter_by(name=consultant).first():
                         db.session.add(Consultant(name=consultant))
-                        db.session.commit()
+                        db.session.flush()
                     if not Pharmacy.query.filter_by(name=pharmacy).first():
                         db.session.add(Pharmacy(name=pharmacy))
-                        db.session.commit()
+                        db.session.flush()
 
                     patient = Patient(
                         hospital_id=hospital_id,
@@ -308,11 +576,11 @@ def import_database():
                         occupation=occupation,
                         residential_address=residential_address,
                         contact_number=contact_number,
-                        employer_name='', # combined
-                        employer_address=employer_address,
-                        next_of_kin_name='Not Provided', # combined
+                        employer_name='Not Provided',
+                        employer_address='Not Provided',
+                        next_of_kin_name=next_of_kin_name,
                         next_of_kin_address=next_of_kin_address,
-                        next_of_kin_relationship=relationship,
+                        next_of_kin_relationship='Not Provided',
                         religion=religion,
                         chief=chief,
                         village=village,
@@ -331,16 +599,22 @@ def import_database():
                     success_count += 1
                 except Exception as e:
                     db.session.rollback()
+                    error_count += 1
                     print(f"Error on row {index}: {str(e)}")
                     continue
             
+            msg_parts = [f'Successfully imported {success_count} records.']
             if skipped_count > 0:
-                flash(f'Successfully imported {success_count} records. Skipped {skipped_count} records due to missing hospital IDs or duplicates.', 'warning')
-            else:
-                flash(f'Successfully imported all {success_count} records.', 'success')
+                msg_parts.append(f'Skipped {skipped_count} (missing hospital ID or duplicate).')
+            if error_count > 0:
+                msg_parts.append(f'{error_count} rows had errors.')
+            
+            flash_type = 'success' if error_count == 0 and skipped_count == 0 else 'warning'
+            flash(' '.join(msg_parts), flash_type)
             return redirect(url_for('patients.list_patients'))
             
         except Exception as e:
             flash(f'Error reading file: {str(e)}', 'danger')
             
     return render_template('patients/import.html', title='Import Database', form=form)
+

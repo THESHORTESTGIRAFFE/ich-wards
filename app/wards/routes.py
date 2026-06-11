@@ -1,5 +1,5 @@
 from flask import render_template, url_for, flash, redirect, Blueprint, request
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app import db
 from app.models.models import Ward
 from app.wards.forms import WardForm
@@ -10,7 +10,14 @@ wards = Blueprint('wards', __name__)
 @wards.route('/wards')
 @login_required
 def list_wards():
-    all_wards = Ward.query.all()
+    role = current_user.role_obj.name
+    if role in ['Nurse', 'Sister In Charge']:
+        if current_user.ward_id:
+            all_wards = Ward.query.filter_by(id=current_user.ward_id).all()
+        else:
+            all_wards = []
+    else:
+        all_wards = Ward.query.all()
     return render_template('wards/manage_wards.html', wards=all_wards)
 
 @wards.route('/ward/new', methods=['GET', 'POST'])

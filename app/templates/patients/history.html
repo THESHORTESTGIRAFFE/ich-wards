@@ -54,6 +54,49 @@
         </div>
     </div>
 
+    <!-- Statistics Summary -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+            <h2 class="card-title" style="color: white; margin: 0; font-size: 1.1rem;"><i class="fas fa-chart-bar"></i> Stay & Admission Statistics</h2>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.5rem; text-align: center;">
+                <div style="border-right: 1px solid #e2e8f0; padding-right: 1rem;">
+                    <p style="color: #6b7280; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Average Stay</p>
+                    <p class="font-bold" style="font-size: 1.5rem; color: #0284c7; margin: 0;">
+                        {% if stats.avg_los is not none %}
+                            {{ stats.avg_los }} <span style="font-size: 0.875rem; font-weight: 500; color: #6b7280;">days</span>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+                </div>
+                <div style="border-right: 1px solid #e2e8f0; padding-right: 1rem;">
+                    <p style="color: #6b7280; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Current Stay</p>
+                    <p class="font-bold" style="font-size: 1.5rem; color: #16a34a; margin: 0;">
+                        {% if stats.current_los is not none %}
+                            {{ stats.current_los }} <span style="font-size: 0.875rem; font-weight: 500; color: #6b7280;">days</span>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+                </div>
+                <div style="border-right: 1px solid #e2e8f0; padding-right: 1rem;">
+                    <p style="color: #6b7280; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Total Admissions</p>
+                    <p class="font-bold" style="font-size: 1.5rem; color: #0f172a; margin: 0;">{{ stats.total_admissions }}</p>
+                </div>
+                <div style="border-right: 1px solid #e2e8f0; padding-right: 1rem;">
+                    <p style="color: #6b7280; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Total Transfers</p>
+                    <p class="font-bold" style="font-size: 1.5rem; color: #f59e0b; margin: 0;">{{ stats.total_transfers }}</p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Total Discharges</p>
+                    <p class="font-bold" style="font-size: 1.5rem; color: #dc2626; margin: 0;">{{ stats.total_discharges }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Timeline -->
     <div class="timeline-container">
         {% if events %}

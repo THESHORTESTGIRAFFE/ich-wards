@@ -33,7 +33,7 @@
                     <div>
                         <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Gender</p>
                         <p class="font-bold" style="font-size: 1.125rem;">
-                            {% if patient.gender == 'M' %}
+                            {% if patient.gender in ['M', 'Male'] %}
                                 <i class="fas fa-mars" style="color: #3b82f6;"></i> Male
                             {% else %}
                                 <i class="fas fa-venus" style="color: #ec4899;"></i> Female

@@ -163,3 +163,4 @@ prompt
 flask_server.log
 docs/archive/
 COMPLETION_CHECKLIST.md
+.antigravitycli/

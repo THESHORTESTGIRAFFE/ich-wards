@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+
+{% block title %}Readmit Patient - Clinical Details{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <span>/</span>
+    <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+    <span>/</span>
+    <span>Readmit Details</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-redo"></i> Readmit Patient
+    </h1>
+    <p class="page-subtitle">Configure new admission details for an existing clinical record</p>
+</div>
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <!-- Patient Info Banner -->
+    <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
+        <div class="card-header">
+            <h2 class="card-title">Selected Patient Record</h2>
+        </div>
+        <div class="card-body" style="padding: 1.5rem;">
+            <div class="grid grid-3" style="gap: 1.5rem;">
+                <div>
+                    <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; margin-bottom: 0.25rem;">Hospital ID</p>
+                    <p class="font-bold" style="font-size: 1.1rem; color: #0f172a;"><span class="badge badge-info">{{ patient.hospital_id }}</span></p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; margin-bottom: 0.25rem;">Full Name</p>
+                    <p class="font-bold" style="font-size: 1.1rem; color: #0f172a;">{{ patient.surname }}, {{ patient.first_names }}</p>
+                </div>
+                <div>
+                    <p style="color: #6b7280; font-size: 0.875rem; text-transform: uppercase; margin-bottom: 0.25rem;">Age / Sex</p>
+                    <p class="font-bold" style="font-size: 1.1rem; color: #0f172a;">{{ patient.age }} years / {{ patient.sex }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Readmission Details Form -->
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <h2 class="card-title" style="color: white; margin: 0;"><i class="fas fa-stethoscope"></i> Admission & Medical Details</h2>
+        </div>
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="card-body" style="padding: 2rem;">
+                <div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <!-- Admission Date & Time -->
+                    <div class="form-group">
+                        <label for="admission_datetime" class="form-label required" style="font-weight: 600;">
+                            <i class="fas fa-calendar-check"></i> Admission Date & Time
+                        </label>
+                        <input type="datetime-local" id="admission_datetime" name="admission_datetime" class="form-control"
+                               value="{{ form.admission_datetime.data.strftime('%Y-%m-%dT%H:%M') if form.admission_datetime.data else '' }}" required>
+                        <small class="helper-text">Select date and time of the new admission</small>
+                        {% if form.admission_datetime.errors %}
+                            {% for error in form.admission_datetime.errors %}
+                                <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Referring Doctor/Hospital -->
+                    <div class="form-group">
+                        <label for="referring_doctor_hospital" class="form-label required" style="font-weight: 600;">
+                            <i class="fas fa-user-md"></i> Referring Doctor/Hospital
+                        </label>
+                        {{ form.referring_doctor_hospital(class="form-control" + (" form-error" if form.referring_doctor_hospital.errors else "")) }}
+                        {% if form.referring_doctor_hospital.errors %}
+                            {% for error in form.referring_doctor_hospital.errors %}
+                                <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Diagnosis -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="diagnosis" class="form-label required" style="font-weight: 600;">
+                        <i class="fas fa-clipboard"></i> Diagnosis
+                    </label>
+                    {{ form.diagnosis(class="form-control" + (" form-error" if form.diagnosis.errors else ""), placeholder="Enter new diagnosis details...", rows="4") }}
+                    <small class="helper-text">Provide the clinical diagnosis for this new admission</small>
+                    {% if form.diagnosis.errors %}
+                        {% for error in form.diagnosis.errors %}
+                            <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <!-- Doctor Name -->
+                    <div class="form-group">
+                        <label for="doctor_name" class="form-label required" style="font-weight: 600;">
+                            <i class="fas fa-user-md"></i> Doctor Name (Handling Patient)
+                        </label>
+                        {{ form.doctor_name(class="form-control" + (" form-error" if form.doctor_name.errors else ""), placeholder="Enter doctor's name") }}
+                        {% if form.doctor_name.errors %}
+                            {% for error in form.doctor_name.errors %}
+                                <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Consultant Name -->
+                    <div class="form-group">
+                        <label for="consultant_name" class="form-label required" style="font-weight: 600;">
+                            <i class="fas fa-user-md"></i> Consultant Name
+                        </label>
+                        {{ form.consultant_name(class="form-control" + (" form-error" if form.consultant_name.errors else "")) }}
+                        {% if form.consultant_name.errors %}
+                            {% for error in form.consultant_name.errors %}
+                                <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <!-- Pharmacy Name -->
+                    <div class="form-group">
+                        <label for="pharmacy_name" class="form-label required" style="font-weight: 600;">
+                            <i class="fas fa-pills"></i> Pharmacy Name
+                        </label>
+                        {{ form.pharmacy_name(class="form-control" + (" form-error" if form.pharmacy_name.errors else "")) }}
+                        {% if form.pharmacy_name.errors %}
+                            {% for error in form.pharmacy_name.errors %}
+                                <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Admission Ward -->
+                    <div class="form-group">
+                        <label for="ward" class="form-label required" style="font-weight: 600;">
+                            <i class="fas fa-hospital-user"></i> Admission Ward
+                        </label>
+                        {{ form.ward(class="form-control" + (" form-error" if form.ward.errors else "")) }}
+                        <small class="helper-text">Select ward for initial placement</small>
+                        {% if form.ward.errors %}
+                            {% for error in form.ward.errors %}
+                                <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer" style="display: flex; gap: 1rem; justify-content: space-between; padding: 1.5rem 2rem;">
+                <button type="submit" class="btn btn-success" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white;">
+                    <i class="fas fa-check-circle"></i> Complete Readmission
+                </button>
+                <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

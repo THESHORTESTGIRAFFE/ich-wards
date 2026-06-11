@@ -56,6 +56,6 @@ def test_reports_admissions(client, app):
 
     response = client.get('/reports?type=admissions')
     assert response.status_code == 200
-    assert b'John Doe' in response.data
+    assert b'Doe, John' in response.data
     assert b'Admission Ward' in response.data
     assert b'Admin' in response.data

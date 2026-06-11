@@ -4,18 +4,69 @@
     <span>/</span>
     <a href="{{ url_for('patients.list_patients') }}">Patients</a>
     <span>/</span>
+    <span>/</span>
     <span>Patient Details</span>
 {% endblock %}
+{% block head %}
+{{ super() }}
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        body { background: white; padding: 0; margin: 0; }
+        .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+        .page-header { border-bottom: none; }
+        main.container { padding: 0; max-width: 100%; }
+        /* Ensure grids still act like grids */
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    }
+    @media screen {
+        .print-only { display: none !important; }
+    }
+</style>
+{% endblock %}
 {% block content %}
+    <div class="print-only" style="text-align: center; margin-bottom: 2rem;">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="max-height: 80px; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">ICH Wards Management</h2>
+        <p style="color: #666; margin-top: 0.25rem;">Patient Clinical Record</p>
+        <hr style="margin-top: 1rem;">
+    </div>
     <div class="page-header flex-between" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
         <div>
             <h1 class="page-title">Patient Details</h1>
             <p class="page-subtitle">Detailed clinical and admission information for {{ patient.surname }}, {{ patient.first_names }}</p>
         </div>
         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            {% if patient.status == 'Registered' %}
+                <a href="{{ url_for('patients.admit_patient', patient_id=patient.id) }}" class="btn btn-success no-print">
+                    <i class="fas fa-sign-in-alt"></i> Admit Patient
+                </a>
+            {% elif patient.status == 'Admitted' or patient.status == 'Transferred' %}
+                {% if current_user.role_obj.name in ['Admin', 'CMO', 'Sister In Charge'] %}
+                    {% if patient.current_ward and patient.current_ward.type != 'Discharge' %}
+                        <a href="{{ url_for('transfers.transfer_patient', patient_id=patient.id) }}" class="btn btn-warning no-print">
+                            <i class="fas fa-exchange-alt"></i> Transfer Patient
+                        </a>
+                    {% endif %}
+                    <a href="{{ url_for('patients.discharge_patient', patient_id=patient.id) }}" class="btn btn-danger no-print">
+                        <i class="fas fa-sign-out-alt"></i> Discharge Patient
+                    </a>
+                {% endif %}
+            {% elif patient.status in ['Discharged', 'Deceased'] %}
+                {% if current_user.role_obj.name in ['Admin', 'CMO', 'Sister In Charge'] %}
+                    <a href="{{ url_for('patients.readmit_patient_details', patient_id=patient.id) }}" class="btn btn-success no-print">
+                        <i class="fas fa-redo"></i> Readmit Patient
+                    </a>
+                {% endif %}
+            {% endif %}
             <a href="{{ url_for('patients.patient_history', patient_id=patient.id) }}" class="btn btn-secondary no-print">
                 <i class="fas fa-history"></i> History
             </a>
+            <button onclick="window.print()" class="btn btn-secondary no-print">
+                <i class="fas fa-print"></i> Print
+            </button>
             <a href="{{ url_for('patients.list_patients') }}" class="btn btn-primary no-print">
                 <i class="fas fa-arrow-left"></i> Back to Patients
             </a>
@@ -159,13 +210,36 @@
     </div>
 
     {% if patient.discharge_datetime %}
-        <div class="card">
+        <div class="card" style="margin-top: 1.5rem;">
             <div class="card-header">
                 <h2 class="card-title"><i class="fas fa-sign-out-alt"></i> Discharge Information</h2>
             </div>
             <div class="card-body">
-                <p class="text-sm text-muted">Discharge Date & Time</p>
-                <p>{{ patient.discharge_datetime.strftime('%B %d, %Y %H:%M') }}</p>
+                <div class="grid grid-2" style="gap: 1rem;">
+                    <div>
+                        <p class="text-sm text-muted">Discharge Date & Time</p>
+                        <p class="font-semibold">{{ patient.discharge_datetime.strftime('%B %d, %Y %H:%M') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-muted">Discharge Reason</p>
+                        <p class="font-semibold">
+                            {% if patient.status == 'Deceased' or (patient.discharges and patient.discharges[-1].discharge_type == 'Deceased') %}
+                                <span class="badge status-deceased" style="background-color: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem;"><i class="fas fa-cross"></i> Deceased — Patient Passed Away</span>
+                            {% else %}
+                                <span class="badge status-discharged" style="background-color: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem;"><i class="fas fa-check-circle"></i> Discharged — Left Hospital</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if patient.discharges %}
+                    {% set last_discharge = patient.discharges[-1] %}
+                    {% if last_discharge.notes %}
+                        <div style="margin-top: 1rem;">
+                            <p class="text-sm text-muted">Discharge Notes</p>
+                            <p style="white-space: pre-wrap; background-color: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid #e2e8f0; margin-top: 0.25rem;">{{ last_discharge.notes }}</p>
+                        </div>
+                    {% endif %}
+                {% endif %}
             </div>
         </div>
     {% endif %}

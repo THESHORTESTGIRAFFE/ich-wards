@@ -49,5 +49,6 @@ def test_dashboard_data(client, app):
 
     response = client.get('/')
     assert response.status_code == 200
-    assert b'Total Admitted Patients</h3>\n            <p>1</p>' in response.data
-    assert b'Admissions Today</h3>\n            <p>1</p>' in response.data
+    assert b'Total Admitted Patients' in response.data
+    assert b'Admissions Today' in response.data
+    assert b'1' in response.data

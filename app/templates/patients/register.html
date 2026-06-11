@@ -13,6 +13,14 @@
     </div>
 
     <div class="registration-container">
+        <div class="alert alert-info fade-in" style="margin-bottom: 1.5rem; border-left: 4px solid #3b82f6; display: flex; gap: 0.75rem; align-items: flex-start; padding: 1rem; background-color: #eff6ff; border-radius: 0.375rem; color: #1e3a8a;">
+            <i class="alert-icon fas fa-info-circle" style="color: #3b82f6; margin-top: 0.2rem;"></i>
+            <div>
+                <strong>Is this a readmission?</strong> If this patient has been admitted before, please do not register a new record. Use the 
+                <a href="{{ url_for('patients.readmit_patient') }}" class="font-bold" style="text-decoration: underline; color: inherit; font-weight: 700;">Readmit Patient</a> 
+                form to reuse their existing hospital ID and preserve their clinical history.
+            </div>
+        </div>
         <form method="POST" action="" novalidate>
             {{ form.hidden_tag() }}
 

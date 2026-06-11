@@ -51,6 +51,8 @@ def test_discharge_patient_from_discharge_ward(client, app):
         patient_id = p.id
 
     response = client.post(f'/patient/{patient_id}/discharge', data=dict(
+        discharge_type='Discharged',
+        discharge_datetime='2026-05-27 13:00',
         notes='Recovered well.'
     ), follow_redirects=True)
     assert response.status_code == 200
@@ -63,7 +65,7 @@ def test_discharge_patient_from_discharge_ward(client, app):
         assert discharge is not None
         assert discharge.notes == 'Recovered well.'
 
-def test_discharge_patient_from_general_ward_fails(client, app):
+def test_discharge_patient_from_general_ward_succeeds(client, app):
     login(client, 'admin@test.com', 'admin123')
     with app.app_context():
         general_ward = Ward.query.filter_by(type='General').first()
@@ -73,9 +75,13 @@ def test_discharge_patient_from_general_ward_fails(client, app):
         patient_id = p.id
 
     response = client.post(f'/patient/{patient_id}/discharge', data=dict(
-        notes='Failing discharge.'
+        discharge_type='Discharged',
+        discharge_datetime='2026-05-27 13:00',
+        notes='Succeeding discharge from general ward.'
     ), follow_redirects=True)
-    assert b'Patients can only be discharged via the Discharge Ward' in response.data
+    assert response.status_code == 200
+    assert b'Patient discharged successfully!' in response.data
     with app.app_context():
         p = Patient.query.get(patient_id)
-        assert p.status == 'Admitted'
+        assert p.status == 'Discharged'
+        assert p.ward_id is None
