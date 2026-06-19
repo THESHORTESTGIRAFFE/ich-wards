@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, SubmitField, SelectField
+from wtforms import StringField, IntegerField, SubmitField, SelectField, BooleanField
 from wtforms.validators import DataRequired, ValidationError
 from app.models.models import Ward
 
@@ -7,6 +7,7 @@ class WardForm(FlaskForm):
     name = StringField('Ward Name', validators=[DataRequired()])
     type = SelectField('Ward Type', choices=[('Admission', 'Admission'), ('General', 'General'), ('Discharge', 'Discharge')], validators=[DataRequired()])
     capacity = IntegerField('Capacity (Optional)')
+    is_permanent_residence = BooleanField('Is Permanent Residence Ward')
     submit = SubmitField('Submit')
 
     def __init__(self, original_name=None, *args, **kwargs):

@@ -26,7 +26,7 @@ def list_wards():
 def create_ward():
     form = WardForm()
     if form.validate_on_submit():
-        ward = Ward(name=form.name.data, type=form.type.data, capacity=form.capacity.data)
+        ward = Ward(name=form.name.data, type=form.type.data, capacity=form.capacity.data, is_permanent_residence=form.is_permanent_residence.data)
         db.session.add(ward)
         db.session.commit()
         flash('Ward created successfully!', 'success')
@@ -43,6 +43,7 @@ def edit_ward(ward_id):
         ward.name = form.name.data
         ward.type = form.type.data
         ward.capacity = form.capacity.data
+        ward.is_permanent_residence = form.is_permanent_residence.data
         db.session.commit()
         flash('Ward updated successfully!', 'success')
         return redirect(url_for('wards.list_wards'))
@@ -50,6 +51,7 @@ def edit_ward(ward_id):
         form.name.data = ward.name
         form.type.data = ward.type
         form.capacity.data = ward.capacity
+        form.is_permanent_residence.data = ward.is_permanent_residence
     return render_template('wards/create_ward.html', title='Edit Ward', form=form)
 
 @wards.route('/ward/<int:ward_id>/delete', methods=['POST'])

@@ -54,6 +54,13 @@
                             {% endfor %}
                         {% endif %}
                     </div>
+                    
+                    <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                        {{ form.is_permanent_residence(class="form-check-input") }}
+                        <label for="is_permanent_residence" class="form-label" style="margin-bottom: 0;">
+                            Is Permanent Residence Ward
+                        </label>
+                    </div>
                 </div>
 
                 <div class="card-footer" style="display: flex; gap: 1rem; justify-content: space-between;">

@@ -19,6 +19,7 @@ class Ward(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     type = db.Column(db.String(50), nullable=False) # Admission, General, Discharge
     capacity = db.Column(db.Integer, nullable=True)
+    is_permanent_residence = db.Column(db.Boolean, default=False, nullable=False)
     users = db.relationship('User', backref='ward_obj', lazy=True)
     patients = db.relationship('Patient', backref='current_ward', lazy=True)
 
@@ -28,6 +29,8 @@ class Ward(db.Model):
 
     @property
     def is_full(self):
+        if self.is_permanent_residence:
+            return False
         if self.capacity is None:
             return False
         return self.current_occupancy >= self.capacity
@@ -100,8 +103,9 @@ class Patient(db.Model):
     
     # Next of Kin Information
     next_of_kin_name = db.Column(db.String(100), nullable=False)
+    next_of_kin_contact_number = db.Column(db.String(20), nullable=False)
     next_of_kin_address = db.Column(db.Text, nullable=False)
-    next_of_kin_relationship = db.Column(db.String(50), nullable=False)
+    next_of_kin_relationship = db.Column(db.String(100), nullable=False)
     
     # Geographical Information (Set to NA by default)
     chief = db.Column(db.String(100), default='Not Applicable')
@@ -114,9 +118,10 @@ class Patient(db.Model):
     
     # Medical Information
     diagnosis = db.Column(db.Text, nullable=False)
+    treatment = db.Column(db.Text, nullable=True)
     doctor_name = db.Column(db.String(100), nullable=False)
     consultant_name = db.Column(db.String(100), nullable=False)
-    pharmacy_name = db.Column(db.String(100), nullable=False)
+    pharmacy_name = db.Column(db.String(100), nullable=False, default='Ingutsheni Pharmacy')
     
     # Discharge/Transfer/Death Information (nullable - filled only when applicable)
     discharge_datetime = db.Column(db.DateTime, nullable=True)
@@ -198,10 +203,14 @@ class Patient(db.Model):
             kwargs['contact_number'] = 'Not Provided'
         if 'next_of_kin_name' not in kwargs:
             kwargs['next_of_kin_name'] = 'Not Provided'
+        if 'next_of_kin_contact_number' not in kwargs:
+            kwargs['next_of_kin_contact_number'] = 'Not Provided'
         if 'next_of_kin_address' not in kwargs:
             kwargs['next_of_kin_address'] = 'Not Provided'
         if 'next_of_kin_relationship' not in kwargs:
             kwargs['next_of_kin_relationship'] = 'Other'
+        if 'treatment' not in kwargs:
+            kwargs['treatment'] = 'Not Provided'
         if 'admission_datetime' not in kwargs:
             kwargs['admission_datetime'] = datetime.now()
         if 'referring_doctor_hospital' not in kwargs:
