@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SubmitField, SelectField, TextAreaField, DateField, DateTimeField
 from wtforms.validators import DataRequired, ValidationError, Length, Regexp, Optional
-from app.models.models import Patient, Race, MaritalStatus, Occupation, ReferringDoctorHospital, Consultant, Pharmacy
+from app.models.models import Patient, MaritalStatus, ReferringDoctorHospital
 from datetime import datetime as dt_class
 
 class FlexibleDateTimeField(DateTimeField):
@@ -26,14 +26,16 @@ class FlexibleDateTimeField(DateTimeField):
 
 class PatientRegistrationForm(FlaskForm):
     # Personal Information Section
+    hospital_id = StringField('Hospital Number', validators=[Optional(), Length(min=1, max=6), Regexp(r'^[0-9]+$', message='Hospital number must contain only digits')])
     surname = StringField('Surname', validators=[DataRequired(), Length(min=2, max=100)])
     first_names = StringField('First Name(s)', validators=[DataRequired(), Length(min=2, max=100)])
     date_of_birth = DateField('Date of Birth', format='%Y-%m-%d', validators=[DataRequired()])
     
     sex = SelectField('Sex', choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], validators=[DataRequired()])
-    race = SelectField('Race', coerce=int, validators=[DataRequired()])
+    race = SelectField('Race', choices=[('African', 'African'), ('Caucasian', 'Caucasian'), ('Other', 'Other')], validators=[DataRequired()])
+    religion = SelectField('Religion', choices=[('Christianity', 'Christianity'), ('Hinduism', 'Hinduism'), ('Muslim', 'Muslim'), ('Traditional', 'Traditional')], validators=[DataRequired()])
     marital_status = SelectField('Marital Status', coerce=int, validators=[DataRequired()])
-    occupation = SelectField('Occupation', coerce=int, validators=[DataRequired()])
+    occupation = SelectField('Occupation', choices=[('Employed', 'Employed'), ('Unemployed', 'Unemployed'), ('Self-Employed', 'Self-Employed'), ('Student', 'Student'), ('Other', 'Other')], validators=[DataRequired()])
     
     # Contact Information Section
     residential_address = TextAreaField('Residential Address', validators=[DataRequired(), Length(min=5, max=500)])
@@ -45,33 +47,34 @@ class PatientRegistrationForm(FlaskForm):
     
     # Next of Kin Information Section
     next_of_kin_name = StringField('Next of Kin Name', validators=[DataRequired(), Length(min=2, max=100)])
+    next_of_kin_contact_number = StringField('Next of Kin Contact Number', validators=[DataRequired(), Length(min=10, max=20)])
     next_of_kin_address = TextAreaField('Next of Kin Address', validators=[DataRequired(), Length(min=5, max=500)])
-    next_of_kin_relationship = SelectField('Relationship to Patient', 
-                                          choices=[('Parent', 'Parent'), ('Sibling', 'Sibling'), ('Spouse', 'Spouse'), 
-                                                  ('Child', 'Child'), ('Other', 'Other')], 
-                                          validators=[DataRequired()])
+    next_of_kin_relationship = StringField('Relationship to Next of Kin', validators=[DataRequired(), Length(min=2, max=100)])
     
     # Admission Information Section
     admission_datetime = FlexibleDateTimeField('Admission Date & Time', validators=[DataRequired()])
-    referring_doctor_hospital = SelectField('Referring Doctor/Hospital', coerce=int, validators=[DataRequired()])
+    referring_doctor_hospital = StringField('Referring Doctor/Hospital', validators=[DataRequired(), Length(min=2, max=150)])
     
     # Medical Information Section
     diagnosis = TextAreaField('Diagnosis', validators=[DataRequired(), Length(min=10, max=2000)])
+    treatment = TextAreaField('Treatment / Current Regimen', validators=[DataRequired(), Length(min=5, max=2000)])
     doctor_name = StringField('Name of Doctor (Who handled patient after admission)', validators=[DataRequired(), Length(min=2, max=100)])
-    consultant_name = SelectField('Consultant Name', coerce=int, validators=[DataRequired()])
-    pharmacy_name = SelectField('Pharmacy Name', coerce=int, validators=[DataRequired()])
+    consultant_name = StringField('Consultant Name', validators=[DataRequired(), Length(min=2, max=100)])
+    pharmacy_name = StringField('Pharmacy Name', validators=[DataRequired(), Length(min=2, max=100)])
     
     submit = SubmitField('Register Patient')
 
     def __init__(self, *args, **kwargs):
         super(PatientRegistrationForm, self).__init__(*args, **kwargs)
-        # Populate dropdown choices from database
-        self.race.choices = [(r.id, r.name) for r in Race.query.all()]
+        # Populate lookup dropdown choices from database
         self.marital_status.choices = [(m.id, m.name) for m in MaritalStatus.query.all()]
-        self.occupation.choices = [(o.id, o.name) for o in Occupation.query.all()]
-        self.referring_doctor_hospital.choices = [(r.id, r.name) for r in ReferringDoctorHospital.query.all()]
-        self.consultant_name.choices = [(c.id, c.name) for c in Consultant.query.all()]
-        self.pharmacy_name.choices = [(p.id, p.name) for p in Pharmacy.query.all()]
+
+    def validate_hospital_id(self, hospital_id):
+        if hospital_id.data:
+            hospital_id.data = hospital_id.data.strip().zfill(6)
+            existing = Patient.query.filter_by(hospital_id=hospital_id.data).first()
+            if existing and not (hasattr(self, 'patient_id') and existing.id == getattr(self, 'patient_id')):
+                raise ValidationError('This hospital number already exists. Leave blank to auto-generate or enter a different number.')
 
     def validate_date_of_birth(self, date_of_birth):
         from datetime import datetime
@@ -96,19 +99,17 @@ class ReadmissionForm(FlaskForm):
 
 class ReadmitPatientForm(FlaskForm):
     admission_datetime = FlexibleDateTimeField('Admission Date & Time', validators=[DataRequired()])
-    referring_doctor_hospital = SelectField('Referring Doctor/Hospital', coerce=int, validators=[DataRequired()])
+    referring_doctor_hospital = StringField('Referring Doctor/Hospital', validators=[DataRequired(), Length(min=2, max=150)])
     diagnosis = TextAreaField('Diagnosis', validators=[DataRequired(), Length(min=10, max=2000)])
+    treatment = TextAreaField('Treatment / Current Regimen', validators=[DataRequired(), Length(min=5, max=2000)])
     doctor_name = StringField('Name of Doctor (Who handled patient after admission)', validators=[DataRequired(), Length(min=2, max=100)])
-    consultant_name = SelectField('Consultant Name', coerce=int, validators=[DataRequired()])
-    pharmacy_name = SelectField('Pharmacy Name', coerce=int, validators=[DataRequired()])
+    consultant_name = StringField('Consultant Name', validators=[DataRequired(), Length(min=2, max=100)])
+    pharmacy_name = StringField('Pharmacy Name', validators=[DataRequired(), Length(min=2, max=100)])
     ward = SelectField('Admission Ward', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Readmit Patient')
 
     def __init__(self, *args, **kwargs):
         super(ReadmitPatientForm, self).__init__(*args, **kwargs)
-        self.referring_doctor_hospital.choices = [(r.id, r.name) for r in ReferringDoctorHospital.query.all()]
-        self.consultant_name.choices = [(c.id, c.name) for c in Consultant.query.all()]
-        self.pharmacy_name.choices = [(p.id, p.name) for p in Pharmacy.query.all()]
 
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 class ImportForm(FlaskForm):

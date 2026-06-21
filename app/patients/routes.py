@@ -1,5 +1,7 @@
-from flask import render_template, url_for, flash, redirect, Blueprint, request
+from flask import render_template, url_for, flash, redirect, Blueprint, request, current_app, send_file
 from flask_login import login_required, current_user
+import sqlite3
+import io
 from app import db
 from app.models.models import (Patient, Ward, Admission, Discharge, Transfer, Race, MaritalStatus, 
                               Occupation, ReferringDoctorHospital, Consultant, Pharmacy)
@@ -24,6 +26,37 @@ def generate_hospital_id():
     else:
         next_num = 25000
     return str(next_num).zfill(6)
+
+@patients.route('/database/backup')
+@login_required
+@role_required(['Admin', 'CMO'])
+def backup_database():
+    try:
+        db_uri = current_app.config['SQLALCHEMY_DATABASE_URI']
+        db_path = db_uri.replace('sqlite:///', '')
+        
+        conn = sqlite3.connect(db_path)
+        sql_dump = io.StringIO()
+        for line in conn.iterdump():
+            sql_dump.write(line + '\n')
+        conn.close()
+        
+        mem = io.BytesIO()
+        mem.write(sql_dump.getvalue().encode('utf-8'))
+        mem.seek(0)
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"hospital_backup_{timestamp}.sql"
+        
+        return send_file(
+            mem,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/sql'
+        )
+    except Exception as e:
+        flash(f'Error creating backup: {str(e)}', 'danger')
+        return redirect(url_for('patients.list_patients'))
 
 @patients.route('/patients')
 @login_required
@@ -79,39 +112,107 @@ def view_patient(patient_id):
             return redirect(url_for('patients.list_patients'))
     return render_template('patients/detail.html', patient=patient)
 
+@patients.route('/patient/<int:patient_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_patient(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    
+    # Access control: Nurses and Sisters in Charge can only edit patients in their own ward
+    role = current_user.role_obj.name
+    if role in ['Nurse', 'Sister In Charge']:
+        if patient.ward_id != current_user.ward_id or current_user.ward_id is None:
+            flash('You do not have permission to edit patients in other wards.', 'danger')
+            return redirect(url_for('patients.list_patients'))
+
+    form = PatientRegistrationForm(obj=patient)
+    form.patient_id = patient.id
+    if request.method == 'GET':
+        form.hospital_id.data = patient.hospital_id
+        form.race.data = patient.race
+        form.religion.data = patient.religion or 'Christianity'
+        form.marital_status.data = MaritalStatus.query.filter_by(name=patient.marital_status).first().id if patient.marital_status else None
+        form.occupation.data = patient.occupation
+        form.next_of_kin_contact_number.data = patient.next_of_kin_contact_number
+        form.treatment.data = patient.treatment
+    if form.validate_on_submit():
+        try:
+            hospital_id = form.hospital_id.data.strip().zfill(6) if form.hospital_id.data else patient.hospital_id
+            if hospital_id != patient.hospital_id and Patient.query.filter_by(hospital_id=hospital_id).first():
+                flash(f'Hospital number {hospital_id} is already in use. Please choose a different number.', 'danger')
+                return render_template('patients/register.html', title='Edit Patient', form=form, edit=True, patient=patient)
+
+            patient.hospital_id = hospital_id
+            patient.surname = form.surname.data
+            patient.first_names = form.first_names.data
+            patient.date_of_birth = form.date_of_birth.data
+            patient.age = datetime.now().year - form.date_of_birth.data.year
+            patient.sex = form.sex.data
+            patient.race = form.race.data
+            patient.religion = form.religion.data
+            patient.marital_status = MaritalStatus.query.get(form.marital_status.data).name
+            patient.occupation = form.occupation.data
+            patient.residential_address = form.residential_address.data
+            patient.contact_number = form.contact_number.data
+            patient.employer_name = form.employer_name.data or ''
+            patient.employer_address = form.employer_address.data or ''
+            patient.next_of_kin_name = form.next_of_kin_name.data
+            patient.next_of_kin_contact_number = form.next_of_kin_contact_number.data
+            patient.next_of_kin_address = form.next_of_kin_address.data
+            patient.next_of_kin_relationship = form.next_of_kin_relationship.data
+            patient.admission_datetime = form.admission_datetime.data
+            patient.referring_doctor_hospital = form.referring_doctor_hospital.data
+            patient.diagnosis = form.diagnosis.data
+            patient.treatment = form.treatment.data
+            patient.doctor_name = form.doctor_name.data
+            patient.consultant_name = form.consultant_name.data
+            patient.pharmacy_name = form.pharmacy_name.data
+            db.session.commit()
+            flash('Patient details updated successfully.', 'success')
+            return redirect(url_for('patients.view_patient', patient_id=patient.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating patient: {str(e)}', 'danger')
+    return render_template('patients/register.html', title='Edit Patient', form=form, edit=True, patient=patient)
+
 @patients.route('/patient/register', methods=['GET', 'POST'])
 @login_required
 def register_patient():
     form = PatientRegistrationForm()
     if form.validate_on_submit():
         try:
-            # Generate hospital ID
-            hospital_id = generate_hospital_id()
-            
+            hospital_id = form.hospital_id.data.strip().zfill(6) if form.hospital_id.data else generate_hospital_id()
+
+            if Patient.query.filter_by(hospital_id=hospital_id).first():
+                flash(f'Hospital number {hospital_id} is already in use. Please choose a different number.', 'danger')
+                return render_template('patients/register.html', title='Register Patient', form=form)
+
             # Create new patient with all fields
             patient = Patient(
                 hospital_id=hospital_id,
                 surname=form.surname.data,
                 first_names=form.first_names.data,
                 date_of_birth=form.date_of_birth.data,
-                age=datetime.now().year - form.date_of_birth.data.year,  # Calculate age
+                age=datetime.now().year - form.date_of_birth.data.year,
                 sex=form.sex.data,
-                race=Race.query.get(form.race.data).name,
+                race=form.race.data,
                 marital_status=MaritalStatus.query.get(form.marital_status.data).name,
-                occupation=Occupation.query.get(form.occupation.data).name,
+                occupation=form.occupation.data,
+                religion=form.religion.data,
                 residential_address=form.residential_address.data,
                 contact_number=form.contact_number.data,
                 employer_name=form.employer_name.data or '',
                 employer_address=form.employer_address.data or '',
                 next_of_kin_name=form.next_of_kin_name.data,
+                next_of_kin_contact_number=form.next_of_kin_contact_number.data,
                 next_of_kin_address=form.next_of_kin_address.data,
                 next_of_kin_relationship=form.next_of_kin_relationship.data,
                 admission_datetime=form.admission_datetime.data,
-                referring_doctor_hospital=ReferringDoctorHospital.query.get(form.referring_doctor_hospital.data).name,
+                referring_doctor_hospital=form.referring_doctor_hospital.data,
                 diagnosis=form.diagnosis.data,
+                treatment=form.treatment.data,
                 doctor_name=form.doctor_name.data,
-                consultant_name=Consultant.query.get(form.consultant_name.data).name,
-                pharmacy_name=Pharmacy.query.get(form.pharmacy_name.data).name,
+                consultant_name=form.consultant_name.data,
+                pharmacy_name=form.pharmacy_name.data,
                 status='Registered'
             )
             db.session.add(patient)
@@ -332,11 +433,12 @@ def readmit_patient_details(patient_id):
             patient.ward_id = ward_id
             patient.discharge_datetime = None
             patient.admission_datetime = form.admission_datetime.data
-            patient.referring_doctor_hospital = ReferringDoctorHospital.query.get(form.referring_doctor_hospital.data).name
+            patient.referring_doctor_hospital = form.referring_doctor_hospital.data
             patient.diagnosis = form.diagnosis.data
+            patient.treatment = form.treatment.data
             patient.doctor_name = form.doctor_name.data
-            patient.consultant_name = Consultant.query.get(form.consultant_name.data).name
-            patient.pharmacy_name = Pharmacy.query.get(form.pharmacy_name.data).name
+            patient.consultant_name = form.consultant_name.data
+            patient.pharmacy_name = form.pharmacy_name.data
 
             # Log Admission
             admission = Admission(patient_id=patient.id, ward_id=ward_id, admitted_by=current_user.id)
@@ -351,17 +453,12 @@ def readmit_patient_details(patient_id):
     elif request.method == 'GET':
         form.admission_datetime.data = datetime.now()
         form.diagnosis.data = patient.diagnosis
+        form.treatment.data = patient.treatment
         form.doctor_name.data = patient.doctor_name
         
-        ref = ReferringDoctorHospital.query.filter_by(name=patient.referring_doctor_hospital).first()
-        if ref:
-            form.referring_doctor_hospital.data = ref.id
-        cons = Consultant.query.filter_by(name=patient.consultant_name).first()
-        if cons:
-            form.consultant_name.data = cons.id
-        pharm = Pharmacy.query.filter_by(name=patient.pharmacy_name).first()
-        if pharm:
-            form.pharmacy_name.data = pharm.id
+        form.referring_doctor_hospital.data = patient.referring_doctor_hospital
+        form.consultant_name.data = patient.consultant_name
+        form.pharmacy_name.data = patient.pharmacy_name
 
     return render_template('patients/readmit_details.html', title='Readmit Patient', form=form, patient=patient)
 
@@ -496,12 +593,16 @@ def import_database():
                     contact_number = get_val(['contact number', 'phone'], 'Not Provided')
                     
                     next_of_kin_name = get_val(['next of kin and name', 'next of kin name'], 'Not Provided')
+                    next_of_kin_contact_number = get_val(['next of kin contact number', 'next of kin phone', 'next of kin telephone', 'nok phone', 'phone of next of kin', 'next of kin contact'], 'Not Provided')
                     next_of_kin_address = get_val(['next of kin address'], 'Not Provided')
+                    next_of_kin_relationship = get_val(['next of kin relationship', 'relationship to next of kin', 'next of kin relation', 'relationship'], 'Not Provided')
                     # Extract phone from next_of_kin_address if present
                     
                     religion = get_val(['religion'], 'Not Applicable')
                     religion_map = {'unknown': 'Not Applicable'}
                     religion = religion_map.get(religion.lower(), religion)
+
+                    treatment = get_val(['treatment', 'current regimen', 'regimen', 'treatment plan'], 'Not Provided')
 
                     chief = get_val(['chief'], 'Not Applicable')
                     village = get_val(['village'], 'Not Applicable')
@@ -579,6 +680,7 @@ def import_database():
                         employer_name='Not Provided',
                         employer_address='Not Provided',
                         next_of_kin_name=next_of_kin_name,
+                        next_of_kin_contact_number=next_of_kin_contact_number,
                         next_of_kin_address=next_of_kin_address,
                         next_of_kin_relationship='Not Provided',
                         religion=religion,
@@ -588,6 +690,7 @@ def import_database():
                         admission_datetime=admission_dt,
                         referring_doctor_hospital=referring,
                         diagnosis=diagnosis,
+                        treatment=treatment,
                         doctor_name=handling_doctor,
                         consultant_name=consultant,
                         pharmacy_name=pharmacy,

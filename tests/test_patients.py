@@ -63,20 +63,23 @@ def test_register_patient(client, app):
         first_names='John',
         date_of_birth='1996-05-27',
         sex='Male',
-        race=1,
+        race='African',
         marital_status=1,
-        occupation=1,
+        occupation='Student',
+        religion='Christianity',
         residential_address='123 Main Street, Kampala',
         contact_number='0771234567',
         next_of_kin_name='Jane Doe',
+        next_of_kin_contact_number='0771234567',
         next_of_kin_address='123 Main Street, Kampala',
         next_of_kin_relationship='Spouse',
         admission_datetime='2026-05-27 13:00',
-        referring_doctor_hospital=1,
+        referring_doctor_hospital='Dr. Peter Asiimwe',
         diagnosis='Depression and anxiety symptoms',
+        treatment='Adequate treatment provided',
         doctor_name='Dr. Peter Asiimwe',
-        consultant_name=1,
-        pharmacy_name=1
+        consultant_name='Dr. Paul Atim',
+        pharmacy_name='Main Hospital Pharmacy'
     ), follow_redirects=True)
     assert response.status_code == 200
     assert b'Patient registered successfully!' in response.data
