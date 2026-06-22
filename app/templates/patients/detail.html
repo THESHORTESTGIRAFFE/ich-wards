@@ -61,6 +61,9 @@
                     </a>
                 {% endif %}
             {% endif %}
+            <a href="{{ url_for('patients.edit_patient', patient_id=patient.id) }}" class="btn btn-primary no-print">
+                <i class="fas fa-edit"></i> Edit Patient
+            </a>
             <a href="{{ url_for('patients.patient_history', patient_id=patient.id) }}" class="btn btn-secondary no-print">
                 <i class="fas fa-history"></i> History
             </a>
@@ -166,6 +169,10 @@
                     <p>{{ patient.next_of_kin_name }}</p>
                 </div>
                 <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Next of Kin Contact</p>
+                    <p>{{ patient.next_of_kin_contact_number or 'Not Provided' }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
                     <p class="text-sm text-muted">Relationship</p>
                     <p>{{ patient.next_of_kin_relationship }}</p>
                 </div>
@@ -192,6 +199,10 @@
                 <div style="margin-bottom: 1rem;">
                     <p class="text-sm text-muted">Primary Doctor</p>
                     <p>{{ patient.doctor_name }}</p>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <p class="text-sm text-muted">Treatment / Regimen</p>
+                    <p>{{ patient.treatment or 'Not Provided' }}</p>
                 </div>
                 <div style="margin-bottom: 1rem;">
                     <p class="text-sm text-muted">Consultant</p>

@@ -95,6 +95,18 @@
                     {% endif %}
                 </div>
 
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="treatment" class="form-label required" style="font-weight: 600;">
+                        <i class="fas fa-prescription-bottle-alt"></i> Treatment / Current Regimen
+                    </label>
+                    {{ form.treatment(class="form-control" + (" form-error" if form.treatment.errors else ""), placeholder="Describe treatment or regimen", rows="3") }}
+                    {% if form.treatment.errors %}
+                        {% for error in form.treatment.errors %}
+                            <div class="error-message" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
                 <div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
                     <!-- Doctor Name -->
                     <div class="form-group">

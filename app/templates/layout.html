@@ -361,6 +361,9 @@
                 <li><a href="{{ url_for('patients.import_database') }}" class="{% if request.endpoint == 'patients.import_database' %}active{% endif %}">
                     <i class="fas fa-file-import"></i> Import Database
                 </a></li>
+                <li><a href="{{ url_for('patients.backup_database') }}" class="{% if request.endpoint == 'patients.backup_database' %}active{% endif %}">
+                    <i class="fas fa-download"></i> Backup Database
+                </a></li>
                 {% endif %}
             </nav>
 

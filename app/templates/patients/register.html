@@ -8,8 +8,8 @@
 {% endblock %}
 {% block content %}
     <div class="page-header">
-        <h1 class="page-title">Register New Patient</h1>
-        <p class="page-subtitle">Add a new patient to the mental health hospital system</p>
+        <h1 class="page-title">{{ 'Edit Patient' if edit else 'Register New Patient' }}</h1>
+        <p class="page-subtitle">{{ 'Update patient details and admission record' if edit else 'Add a new patient to the mental health hospital system' }}</p>
     </div>
 
     <div class="registration-container">
@@ -31,6 +31,20 @@
                 </div>
                 <div class="card-body">
                     <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <!-- Hospital ID -->
+                        <div class="form-group">
+                            <label for="hospital_id" class="form-label">
+                                <i class="fas fa-hashtag"></i> Hospital Number
+                            </label>
+                            {{ form.hospital_id(class="form-control" + (" form-error" if form.hospital_id.errors else ""), placeholder="Optional - leave blank to auto-generate", autocomplete="off") }}
+                            <small class="helper-text">Optional custom 6-digit hospital number. Required in edit mode if changing ID.</small>
+                            {% if form.hospital_id.errors %}
+                                {% for error in form.hospital_id.errors %}
+                                    <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
                         <!-- Surname -->
                         <div class="form-group">
                             <label for="surname" class="form-label required">
@@ -108,12 +122,25 @@
                                 <i class="fas fa-heart"></i> Marital Status
                             </label>
                             {{ form.marital_status(class="form-control" + (" form-error" if form.marital_status.errors else "")) }}
-                            {% if form.marital_status.errors %}
-                                {% for error in form.marital_status.errors %}
+                        </div>
+
+                        <!-- Religion -->
+                        <div class="form-group">
+                            <label for="religion" class="form-label required">
+                                <i class="fas fa-pray"></i> Religion
+                            </label>
+                            {{ form.religion(class="form-control" + (" form-error" if form.religion.errors else "")) }}
+                            {% if form.religion.errors %}
+                                {% for error in form.religion.errors %}
                                     <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
                                 {% endfor %}
                             {% endif %}
                         </div>
+                        {% if form.marital_status.errors %}
+                            {% for error in form.marital_status.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
 
                     <div class="form-group">
@@ -229,6 +256,18 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="next_of_kin_contact_number" class="form-label required">
+                            <i class="fas fa-phone"></i> Contact Number
+                        </label>
+                        {{ form.next_of_kin_contact_number(class="form-control" + (" form-error" if form.next_of_kin_contact_number.errors else ""), placeholder="Enter next of kin phone number", autocomplete="tel") }}
+                        {% if form.next_of_kin_contact_number.errors %}
+                            {% for error in form.next_of_kin_contact_number.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
                         <label for="next_of_kin_address" class="form-label required">
                             <i class="fas fa-map-marker-alt"></i> Address
                         </label>
@@ -299,6 +338,18 @@
                         {% endif %}
                     </div>
 
+                    <div class="form-group">
+                        <label for="treatment" class="form-label required">
+                            <i class="fas fa-prescription-bottle-alt"></i> Treatment / Current Regimen
+                        </label>
+                        {{ form.treatment(class="form-control" + (" form-error" if form.treatment.errors else ""), placeholder="Describe treatment or regimen", rows="3") }}
+                        {% if form.treatment.errors %}
+                            {% for error in form.treatment.errors %}
+                                <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
                     <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
                         <!-- Doctor Name -->
                         <div class="form-group">
@@ -343,10 +394,18 @@
 
             <!-- ACTION BUTTONS -->
             <div class="form-actions">
-                {{ form.submit(class="btn btn-primary btn-lg") }}
-                <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary btn-lg">
-                    <i class="fas fa-times"></i> Cancel
-                </a>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> {{ 'Update Patient' if edit else 'Register Patient' }}
+                </button>
+                {% if edit %}
+                    <a href="{{ url_for('patients.view_patient', patient_id=patient.id) }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Back to Patient
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('patients.list_patients') }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                {% endif %}
             </div>
         </form>
     </div>

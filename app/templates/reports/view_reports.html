@@ -116,6 +116,8 @@
                                 <th><i class="fas fa-id-card"></i> Hospital ID</th>
                                 <th><i class="fas fa-info-circle"></i> Status</th>
                                 <th><i class="fas fa-hospital-user"></i> Current Ward</th>
+                                <th><i class="fas fa-clipboard"></i> Diagnosis</th>
+                                <th><i class="fas fa-prescription-bottle-alt"></i> Treatment</th>
                             {% elif report_type == 'wards' %}
                                 <th><i class="fas fa-hospital-user"></i> Ward Name</th>
                                 <th><i class="fas fa-tag"></i> Type</th>
@@ -165,6 +167,8 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ row.current_ward.name if row.current_ward else 'None' }}</td>
+                                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ row.diagnosis }}">{{ row.diagnosis or 'N/A' }}</td>
+                                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ row.treatment }}">{{ row.treatment or 'N/A' }}</td>
                                 {% elif report_type == 'wards' %}
                                     <td><span class="font-semibold">{{ row.name }}</span></td>
                                     <td>{{ row.type }}</td>
