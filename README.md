@@ -51,7 +51,7 @@ A modern, professional Hospital Ward Management System built with Flask and Vani
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/ich-wards.git
+git clone https://github.com/THESHORTESTGIRAFFE/ich-wards.git
 cd ich-wards
 ```
 
