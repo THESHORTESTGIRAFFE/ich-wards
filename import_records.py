@@ -178,12 +178,9 @@ def run_import(filepath='Table1.xlsx'):
                 surname     = surname[:100]
 
                 # ── Dates ────────────────────────────────────────────────────
-                dob           = parse_date_flexible(row.get('DATE OF BIRTH'))
                 admission_dt  = parse_date_flexible(row.get('DATE OF ADMISSION'))
                 discharge_dt  = parse_date_flexible(row.get('DATE OF DISCHARGE'))
 
-                if dob is None:
-                    dob = date(1970, 1, 1)
                 if admission_dt is None:
                     admission_dt = datetime.now()
                 else:
@@ -192,12 +189,27 @@ def run_import(filepath='Table1.xlsx'):
                 if discharge_dt is not None:
                     discharge_dt = datetime(discharge_dt.year, discharge_dt.month, discharge_dt.day)
 
-                # Age from DOB
-                today = date.today()
-                age = today.year - dob.year
-                if (today.month, today.day) < (dob.month, dob.day):
-                    age -= 1
-                age = max(0, min(age, 150))
+                # Age handling
+                age_raw = row.get('AGE')
+                age = 0
+                if pd.notna(age_raw) and str(age_raw).strip() != '':
+                    try:
+                        age = int(float(str(age_raw).strip()))
+                    except (ValueError, TypeError):
+                        age = 0
+                
+                if age <= 0:
+                    # Fallback to DOB
+                    dob_raw = row.get('DATE OF BIRTH')
+                    dob = parse_date_flexible(dob_raw)
+                    if dob:
+                        today = date.today()
+                        age = today.year - dob.year
+                        if (today.month, today.day) < (dob.month, dob.day):
+                            age -= 1
+                        age = max(0, min(age, 150))
+                    else:
+                        age = 0
 
                 # ── Demographics ─────────────────────────────────────────────
                 sex  = normalise_sex(row.get('SEX'))
@@ -228,7 +240,6 @@ def run_import(filepath='Table1.xlsx'):
                     hospital_id=hospital_id,
                     first_names=first_names,
                     surname=surname,
-                    date_of_birth=dob,
                     age=age,
                     sex=sex,
                     race=race_obj.name,

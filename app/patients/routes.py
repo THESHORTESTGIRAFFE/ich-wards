@@ -144,8 +144,7 @@ def edit_patient(patient_id):
             patient.hospital_id = hospital_id
             patient.surname = form.surname.data
             patient.first_names = form.first_names.data
-            patient.date_of_birth = form.date_of_birth.data
-            patient.age = datetime.now().year - form.date_of_birth.data.year
+            patient.age = form.age.data
             patient.sex = form.sex.data
             patient.race = form.race.data
             patient.religion = form.religion.data
@@ -191,8 +190,7 @@ def register_patient():
                 hospital_id=hospital_id,
                 surname=form.surname.data,
                 first_names=form.first_names.data,
-                date_of_birth=form.date_of_birth.data,
-                age=datetime.now().year - form.date_of_birth.data.year,
+                age=form.age.data,
                 sex=form.sex.data,
                 race=form.race.data,
                 marital_status=MaritalStatus.query.get(form.marital_status.data).name,
@@ -543,11 +541,18 @@ def import_database():
                     surname = get_val(['surname'], 'Not Provided')
                     first_names = get_val(['name', 'name(s)', 'first_names', 'first name'], 'Not Provided')
                     
-                    # Parse date of birth - handle various formats
-                    dob_str = get_val(['date of birth', 'dob'], None)
-                    dob = None
+                    # Parse age
+                    age_raw = get_val(['age'], None)
                     age = 0
-                    if dob_str:
+                    if age_raw:
+                        try:
+                            age = int(float(age_raw))
+                        except (ValueError, TypeError):
+                            age = 0
+                    
+                    # Parse date of birth - handle various formats (as fallback if age is 0)
+                    dob_str = get_val(['date of birth', 'dob'], None)
+                    if age == 0 and dob_str:
                         try:
                             dob = pd.to_datetime(dob_str, dayfirst=True, errors='coerce')
                             if pd.notna(dob):
@@ -559,20 +564,14 @@ def import_database():
                                     year = int(float(dob_str))
                                     if 1900 <= year <= 2030:
                                         from datetime import date
-                                        dob = date(year, 1, 1)
                                         age = datetime.now().year - year
                                     else:
-                                        dob = None
+                                        age = 0
                                 except (ValueError, TypeError):
-                                    dob = None
+                                    age = 0
                         except Exception:
-                            dob = None
+                            age = 0
                     
-                    if dob is None:
-                        from datetime import date
-                        dob = date(1900, 1, 1)
-                        age = 0
-
                     sex_raw = get_val(['sex', 'gender'], 'Other')
                     # Map M/F to Male/Female
                     sex_map = {'m': 'Male', 'f': 'Female', 'male': 'Male', 'female': 'Female'}
@@ -669,7 +668,6 @@ def import_database():
                         hospital_id=hospital_id,
                         surname=surname,
                         first_names=first_names,
-                        date_of_birth=dob,
                         age=age,
                         sex=sex,
                         race=race,

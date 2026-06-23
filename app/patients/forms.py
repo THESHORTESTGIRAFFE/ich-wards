@@ -29,7 +29,7 @@ class PatientRegistrationForm(FlaskForm):
     hospital_id = StringField('Hospital Number', validators=[Optional(), Length(min=1, max=6), Regexp(r'^[0-9]+$', message='Hospital number must contain only digits')])
     surname = StringField('Surname', validators=[DataRequired(), Length(min=2, max=100)])
     first_names = StringField('First Name(s)', validators=[DataRequired(), Length(min=2, max=100)])
-    date_of_birth = DateField('Date of Birth', format='%Y-%m-%d', validators=[DataRequired()])
+    age = IntegerField('Age', validators=[DataRequired()])
     
     sex = SelectField('Sex', choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], validators=[DataRequired()])
     race = SelectField('Race', choices=[('African', 'African'), ('Caucasian', 'Caucasian'), ('Other', 'Other')], validators=[DataRequired()])
@@ -75,11 +75,6 @@ class PatientRegistrationForm(FlaskForm):
             existing = Patient.query.filter_by(hospital_id=hospital_id.data).first()
             if existing and not (hasattr(self, 'patient_id') and existing.id == getattr(self, 'patient_id')):
                 raise ValidationError('This hospital number already exists. Leave blank to auto-generate or enter a different number.')
-
-    def validate_date_of_birth(self, date_of_birth):
-        from datetime import datetime
-        if date_of_birth.data > datetime.now().date():
-            raise ValidationError('Date of birth cannot be in the future.')
 
 class AdmissionForm(FlaskForm):
     ward = SelectField('Admission Ward', coerce=int, validators=[DataRequired()])

@@ -81,14 +81,12 @@ def seed_data():
             if not Patient.query.filter_by(hospital_id=hosp_id).first():
                 surname = random.choice(surnames)
                 fname = random.choice(first_names)
-                dob = date(1950, 1, 1) + timedelta(days=random.randint(0, 20000))
-                age = (date.today() - dob).days // 365
+                age = random.randint(0, 100)
                 
                 patient = Patient(
                     hospital_id=hosp_id,
                     surname=surname,
                     first_names=fname,
-                    date_of_birth=dob,
                     age=age,
                     sex=random.choice(['Male', 'Female']),
                     race=random.choice(races).name if races else 'Other',

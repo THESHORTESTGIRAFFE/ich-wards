@@ -85,7 +85,6 @@ class Patient(db.Model):
     # Personal Information
     surname = db.Column(db.String(100), nullable=False)
     first_names = db.Column(db.String(100), nullable=False)
-    date_of_birth = db.Column(db.Date, nullable=False)
     age = db.Column(db.Integer, nullable=False)
     sex = db.Column(db.String(20), nullable=False)  # Male, Female, Other
     race = db.Column(db.String(50), nullable=False)
@@ -187,8 +186,6 @@ class Patient(db.Model):
         gender_val = kwargs.pop('gender', None)
         national_id_val = kwargs.pop('national_id', None)
 
-        if 'date_of_birth' not in kwargs:
-            kwargs['date_of_birth'] = date(1990, 1, 1)
         if 'age' not in kwargs:
             kwargs['age'] = 30
         if 'race' not in kwargs:

@@ -61,7 +61,7 @@ def test_register_patient(client, app):
     response = client.post('/patient/register', data=dict(
         surname='Doe',
         first_names='John',
-        date_of_birth='1996-05-27',
+        age=30,
         sex='Male',
         race='African',
         marital_status=1,

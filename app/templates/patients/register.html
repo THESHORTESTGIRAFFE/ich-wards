@@ -73,16 +73,15 @@
                     </div>
 
                     <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
-                        <!-- Date of Birth -->
+                        <!-- Age -->
                         <div class="form-group">
-                            <label for="date_of_birth" class="form-label required">
-                                <i class="fas fa-calendar"></i> Date of Birth
+                            <label for="age" class="form-label required">
+                                <i class="fas fa-birthday-cake"></i> Age
                             </label>
-                            <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" 
-                                   value="{{ form.date_of_birth.data.strftime('%Y-%m-%d') if form.date_of_birth.data else '' }}" required>
-                            <small class="helper-text">Please select the patient's date of birth</small>
-                            {% if form.date_of_birth.errors %}
-                                {% for error in form.date_of_birth.errors %}
+                            {{ form.age(class="form-control" + (" form-error" if form.age.errors else ""), placeholder="Enter age", type="number", min="0", max="150") }}
+                            <small class="helper-text">Please enter the patient's current age</small>
+                            {% if form.age.errors %}
+                                {% for error in form.age.errors %}
                                     <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
                                 {% endfor %}
                             {% endif %}
