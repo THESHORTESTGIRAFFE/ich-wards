@@ -409,6 +409,15 @@
         </form>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const formErrors = document.querySelectorAll('.form-error');
+            if (formErrors.length > 0) {
+                showToast('Please fix the errors in the form before submitting.', 'danger');
+            }
+        });
+    </script>
+
     <style>
         .registration-container {
             max-width: 1000px;
