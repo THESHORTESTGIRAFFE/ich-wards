@@ -116,9 +116,10 @@ def export_reports():
     writer = csv.writer(output)
 
     if report_type == 'admissions':
-        writer.writerow(['Patient Name', 'Ward', 'Admitted By', 'Timestamp'])
+        writer.writerow(['Patient Name', 'Age', 'Diagnosis', 'Type', 'Ward', 'Timestamp'])
         for row in results:
-            writer.writerow([row.patient.name, row.ward.name, row.user.name, row.timestamp.strftime('%Y-%m-%d %H:%M:%S')])
+            admission_type = 'Readmission' if len(row.patient.admissions) > 1 else 'New'
+            writer.writerow([row.patient.name, row.patient.age, row.patient.diagnosis or '', admission_type, row.ward.name, row.timestamp.strftime('%Y-%m-%d %H:%M:%S')])
     elif report_type == 'transfers':
         writer.writerow(['Patient Name', 'From Ward', 'To Ward', 'Transferred By', 'Timestamp'])
         for row in results:

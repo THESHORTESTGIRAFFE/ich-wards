@@ -99,8 +99,10 @@
                             {% if report_type in ['admissions', 'transfers', 'discharges'] %}
                                 <th><i class="fas fa-user"></i> Patient</th>
                                 {% if report_type == 'admissions' %}
+                                    <th><i class="fas fa-child"></i> Age</th>
+                                    <th><i class="fas fa-clipboard"></i> Diagnosis</th>
+                                    <th><i class="fas fa-check-circle"></i> Type</th>
                                     <th><i class="fas fa-hospital-user"></i> Ward</th>
-                                    <th><i class="fas fa-user-nurse"></i> Admitted By</th>
                                 {% elif report_type == 'transfers' %}
                                     <th><i class="fas fa-arrow-right"></i> From Ward</th>
                                     <th><i class="fas fa-arrow-right"></i> To Ward</th>
@@ -134,10 +136,12 @@
                                         <span class="font-semibold">{{ row.patient.name }}</span>
                                     </td>
                                     {% if report_type == 'admissions' %}
+                                        <td>{{ row.patient.age }}</td>
+                                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ row.patient.diagnosis }}">{{ row.patient.diagnosis or 'N/A' }}</td>
+                                        <td>{% if row.patient.admissions|length > 1 %}Readmission{% else %}New{% endif %}</td>
                                         <td>
                                             <span class="badge badge-success">{{ row.ward.name }}</span>
                                         </td>
-                                        <td>{{ row.user.name }}</td>
                                     {% elif report_type == 'transfers' %}
                                         <td>
                                             <span class="badge badge-warning">{{ row.from_ward.name }}</span>
