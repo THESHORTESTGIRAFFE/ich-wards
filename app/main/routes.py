@@ -8,7 +8,7 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
-    total_patients = Patient.query.filter(Patient.status == 'Admitted').count()
+    total_patients = Patient.query.filter(Patient.is_deleted == False).count()
     wards = Ward.query.all()
 
     today = date.today()
