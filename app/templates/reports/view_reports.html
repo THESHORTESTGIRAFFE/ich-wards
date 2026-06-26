@@ -1,13 +1,13 @@
 {% extends "layout.html" %}
 {% block breadcrumb %}
-    <a href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Home</a>
+    <a href="{{ url_for('main.index') }}">Home</a>
     <span>/</span>
     <span>Reports</span>
 {% endblock %}
 {% block content %}
     <div class="page-header">
         <h1 class="page-title">
-            <i class="fas fa-file-chart-line"></i> Reports
+            Reports
         </h1>
         <p class="page-subtitle">View and filter hospital operation logs</p>
     </div>
@@ -21,37 +21,37 @@
             <div class="grid grid-3" style="gap: 1rem;">
                 <div class="form-group">
                     <label for="type" class="form-label">
-                        <i class="fas fa-filter"></i> Report Type
+                        Report Type
                     </label>
                     <select name="type" id="type" class="form-control">
                         <option value="admissions" {% if report_type == 'admissions' %}selected{% endif %}>
-                            <i class="fas fa-sign-in-alt"></i> Admissions
+                            Admissions
                         </option>
                         <option value="transfers" {% if report_type == 'transfers' %}selected{% endif %}>
-                            <i class="fas fa-exchange-alt"></i> Transfers
+                            Transfers
                         </option>
                         <option value="discharges" {% if report_type == 'discharges' %}selected{% endif %}>
-                            <i class="fas fa-sign-out-alt"></i> Discharges
+                            Discharges
                         </option>
                         <option value="patients" {% if report_type == 'patients' %}selected{% endif %}>
-                            <i class="fas fa-users"></i> All Patients
+                            All Patients
                         </option>
                         <option value="wards" {% if report_type == 'wards' %}selected{% endif %}>
-                            <i class="fas fa-hospital-alt"></i> All Wards
+                            All Wards
                         </option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="start_date" class="form-label">
-                        <i class="fas fa-calendar"></i> Start Date
+                        Start Date
                     </label>
                     <input type="date" name="start_date" id="start_date" class="form-control" value="{{ request.args.get('start_date', '') }}">
                 </div>
 
                 <div class="form-group">
                     <label for="end_date" class="form-label">
-                        <i class="fas fa-calendar"></i> End Date
+                        End Date
                     </label>
                     <input type="date" name="end_date" id="end_date" class="form-control" value="{{ request.args.get('end_date', '') }}">
                 </div>
@@ -59,14 +59,14 @@
 
             <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Filter Results
+                    Filter Results
                 </button>
                 <div style="display: flex; gap: 0.5rem;">
                     <button onclick="window.print()" class="btn btn-secondary">
-                        <i class="fas fa-print"></i> Print Report
+                        Print Report
                     </button>
                     <a href="{{ url_for('reports.export_reports', type=report_type, start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" class="btn btn-success">
-                        <i class="fas fa-file-csv"></i> Export to CSV
+                        Export to CSV
                     </a>
                 </div>
             </div>
@@ -78,15 +78,15 @@
         <div class="card-header">
             <h2 class="card-title">
                 {% if report_type == 'admissions' %}
-                    <i class="fas fa-sign-in-alt"></i> Admission Logs
+                    Admission Logs
                 {% elif report_type == 'transfers' %}
-                    <i class="fas fa-exchange-alt"></i> Transfer Logs
+                    Transfer Logs
                 {% elif report_type == 'discharges' %}
-                    <i class="fas fa-sign-out-alt"></i> Discharge Logs
+                    Discharge Logs
                 {% elif report_type == 'patients' %}
-                    <i class="fas fa-users"></i> Patients Report
+                    Patients Report
                 {% elif report_type == 'wards' %}
-                    <i class="fas fa-hospital-alt"></i> Wards Report
+                    Wards Report
                 {% endif %}
             </h2>
         </div>
@@ -97,34 +97,36 @@
                     <thead>
                         <tr>
                             {% if report_type in ['admissions', 'transfers', 'discharges'] %}
-                                <th><i class="fas fa-user"></i> Patient</th>
+                                <th>Patient</th>
                                 {% if report_type == 'admissions' %}
-                                    <th><i class="fas fa-child"></i> Age</th>
-                                    <th><i class="fas fa-clipboard"></i> Diagnosis</th>
-                                    <th><i class="fas fa-check-circle"></i> Type</th>
-                                    <th><i class="fas fa-hospital-user"></i> Ward</th>
+                                    <th>Age</th>
+                                    <th>Diagnosis</th>
+                                    <th>Type</th>
+                                    <th>Ward</th>
                                 {% elif report_type == 'transfers' %}
-                                    <th><i class="fas fa-arrow-right"></i> From Ward</th>
-                                    <th><i class="fas fa-arrow-right"></i> To Ward</th>
-                                    <th><i class="fas fa-user-nurse"></i> Transferred By</th>
+                                    <th>From Ward</th>
+                                    <th>To Ward</th>
+                                    <th>Transferred By</th>
                                 {% elif report_type == 'discharges' %}
-                                    <th><i class="fas fa-hospital-user"></i> Ward</th>
-                                    <th><i class="fas fa-user-nurse"></i> Discharged By</th>
-                                    <th><i class="fas fa-file-alt"></i> Notes</th>
+                                    <th>Ward</th>
+                                    <th>Discharged By</th>
+                                    <th>Notes</th>
                                 {% endif %}
-                                <th><i class="fas fa-calendar-alt"></i> Date & Time</th>
+                                <th>Date & Time</th>
                             {% elif report_type == 'patients' %}
-                                <th><i class="fas fa-user"></i> Patient Name</th>
-                                <th><i class="fas fa-id-card"></i> Hospital ID</th>
-                                <th><i class="fas fa-info-circle"></i> Status</th>
-                                <th><i class="fas fa-hospital-user"></i> Current Ward</th>
-                                <th><i class="fas fa-clipboard"></i> Diagnosis</th>
-                                <th><i class="fas fa-prescription-bottle-alt"></i> Treatment</th>
+                                <th>Patient Name</th>
+                                <th>Hospital ID</th>
+                                <th>Status</th>
+                                <th>Current Ward</th>
+                                <th>Diagnosis</th>
+                                <th>Treatment</th>
+                                <th>Admission Date</th>
+                                <th>Discharge Date</th>
                             {% elif report_type == 'wards' %}
-                                <th><i class="fas fa-hospital-user"></i> Ward Name</th>
-                                <th><i class="fas fa-tag"></i> Type</th>
-                                <th><i class="fas fa-bed"></i> Capacity</th>
-                                <th><i class="fas fa-users"></i> Occupancy</th>
+                                <th>Ward Name</th>
+                                <th>Type</th>
+                                <th>Capacity</th>
+                                <th>Occupancy</th>
                             {% endif %}
                         </tr>
                     </thead>
@@ -173,6 +175,8 @@
                                     <td>{{ row.current_ward.name if row.current_ward else 'None' }}</td>
                                     <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ row.diagnosis }}">{{ row.diagnosis or 'N/A' }}</td>
                                     <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ row.treatment }}">{{ row.treatment or 'N/A' }}</td>
+                                    <td>{{ row.admission_datetime.strftime('%Y-%m-%d %H:%M') if row.admission_datetime else 'N/A' }}</td>
+                                    <td>{{ row.discharge_datetime.strftime('%Y-%m-%d %H:%M') if row.discharge_datetime else 'N/A' }}</td>
                                 {% elif report_type == 'wards' %}
                                     <td><span class="font-semibold">{{ row.name }}</span></td>
                                     <td>{{ row.type }}</td>
@@ -186,7 +190,6 @@
             </div>
         {% else %}
             <div class="card-body text-center p-6" style="text-align: center;">
-                <i class="fas fa-inbox" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; display: block;"></i>
                 <h3 style="color: #6b7280; margin-bottom: 0.5rem;">No records found</h3>
                 <p style="color: #9ca3af;">Try adjusting your filter criteria</p>
             </div>

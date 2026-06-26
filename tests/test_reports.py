@@ -59,3 +59,16 @@ def test_reports_admissions(client, app):
     assert b'Doe, John' in response.data
     assert b'Admission Ward' in response.data
     assert b'Admin' in response.data
+
+def test_reports_patients(client, app):
+    login(client, 'admin@test.com', 'admin123')
+    with app.app_context():
+        p = Patient(name='Jane Doe', age=25, gender='Female', national_id='NID456', status='Admitted')
+        db.session.add(p)
+        db.session.commit()
+
+    response = client.get('/reports?type=patients')
+    assert response.status_code == 200
+    assert b'Doe, Jane' in response.data
+    assert b'Admission Date' in response.data
+    assert b'Discharge Date' in response.data

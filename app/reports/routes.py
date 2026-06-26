@@ -129,9 +129,9 @@ def export_reports():
         for row in results:
             writer.writerow([row.patient.name, row.ward.name, row.user.name, row.notes, row.timestamp.strftime('%Y-%m-%d %H:%M:%S')])
     elif report_type == 'patients':
-        writer.writerow(['Patient Name', 'Age', 'Sex', 'Hospital ID', 'Status', 'Current Ward', 'Diagnosis', 'Treatment'])
+        writer.writerow(['Patient Name', 'Age', 'Sex', 'Hospital ID', 'Status', 'Current Ward', 'Diagnosis', 'Treatment', 'Admission Date', 'Discharge Date'])
         for row in results:
-            writer.writerow([row.name, row.age, row.sex, row.hospital_id, row.status, row.current_ward.name if row.current_ward else 'None', row.diagnosis or '', row.treatment or ''])
+            writer.writerow([row.name, row.age, row.sex, row.hospital_id, row.status, row.current_ward.name if row.current_ward else 'None', row.diagnosis or '', row.treatment or '', row.admission_datetime.strftime('%Y-%m-%d %H:%M:%S') if row.admission_datetime else 'N/A', row.discharge_datetime.strftime('%Y-%m-%d %H:%M:%S') if row.discharge_datetime else 'N/A'])
     elif report_type == 'wards':
         writer.writerow(['Ward Name', 'Type', 'Capacity', 'Current Occupancy', 'Is Full'])
         for row in results:
