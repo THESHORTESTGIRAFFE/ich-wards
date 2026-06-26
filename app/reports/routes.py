@@ -36,6 +36,12 @@ def view_reports():
         query = Patient.query.filter_by(is_deleted=False)
         if has_ward_restriction:
             query = query.filter(Patient.ward_id == current_user.ward_id)
+        
+        # Apply date filters for patients report based on admission
+        if start_date:
+            query = query.filter(Patient.admission_datetime >= datetime.strptime(start_date, '%Y-%m-%d'))
+        if end_date:
+            query = query.filter(Patient.admission_datetime <= datetime.strptime(end_date, '%Y-%m-%d'))
     elif report_type == 'wards':
         query = Ward.query
         if has_ward_restriction:
@@ -89,6 +95,12 @@ def export_reports():
         query = Patient.query.filter_by(is_deleted=False)
         if has_ward_restriction:
             query = query.filter(Patient.ward_id == current_user.ward_id)
+        
+        # Apply date filters for patients report based on admission
+        if start_date:
+            query = query.filter(Patient.admission_datetime >= datetime.strptime(start_date, '%Y-%m-%d'))
+        if end_date:
+            query = query.filter(Patient.admission_datetime <= datetime.strptime(end_date, '%Y-%m-%d'))
     elif report_type == 'wards':
         query = Ward.query
         if has_ward_restriction:
