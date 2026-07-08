@@ -108,11 +108,11 @@
                                     <th>To Ward</th>
                                     <th>Transferred By</th>
                                 {% elif report_type == 'discharges' %}
-                                    <th>Ward</th>
                                     <th>Discharged By</th>
                                     <th>Notes</th>
+                                    <th>Date of Admission</th>
+                                    <th>Date of Discharge</th>
                                 {% endif %}
-                                <th>Date & Time</th>
                             {% elif report_type == 'patients' %}
                                 <th>Patient Name</th>
                                 <th>Age</th>
@@ -150,13 +150,11 @@
                                         </td>
                                         <td>{{ row.user.name }}</td>
                                     {% elif report_type == 'discharges' %}
-                                        <td>
-                                            <span class="badge badge-danger">{{ row.ward.name }}</span>
-                                        </td>
                                         <td>{{ row.user.name }}</td>
                                         <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ row.notes if row.notes else 'N/A' }}</td>
+                                        <td>{{ row.patient.admission_datetime.strftime('%Y-%m-%d %H:%M') if row.patient.admission_datetime else 'N/A' }}</td>
+                                        <td>{{ row.patient.discharge_datetime.strftime('%Y-%m-%d %H:%M') if row.patient.discharge_datetime else 'N/A' }}</td>
                                     {% endif %}
-                                    <td>{{ row.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
                                 {% elif report_type == 'patients' %}
                                     <td><span class="font-semibold">{{ row.name }}</span></td>
                                     <td>{{ row.age }}</td>
