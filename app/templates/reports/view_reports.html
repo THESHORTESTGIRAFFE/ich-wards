@@ -115,13 +115,10 @@
                                 <th>Date & Time</th>
                             {% elif report_type == 'patients' %}
                                 <th>Patient Name</th>
-                                <th>Hospital ID</th>
-                                <th>Status</th>
-                                <th>Current Ward</th>
-                                <th>Diagnosis</th>
-                                <th>Treatment</th>
-                                <th>Admission Date</th>
-                                <th>Discharge Date</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Date of Admission</th>
+                                <th>Date of Discharge</th>
                             {% elif report_type == 'wards' %}
                                 <th>Ward Name</th>
                                 <th>Type</th>
@@ -162,19 +159,8 @@
                                     <td>{{ row.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
                                 {% elif report_type == 'patients' %}
                                     <td><span class="font-semibold">{{ row.name }}</span></td>
-                                    <td>{{ row.hospital_id }}</td>
-                                    <td>
-                                        {% if row.status == 'Admitted' %}
-                                            <span class="badge status-admitted">Admitted</span>
-                                        {% elif row.status == 'Discharged' %}
-                                            <span class="badge status-discharged">Discharged</span>
-                                        {% else %}
-                                            <span class="badge badge-primary">{{ row.status }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ row.current_ward.name if row.current_ward else 'None' }}</td>
-                                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ row.diagnosis }}">{{ row.diagnosis or 'N/A' }}</td>
-                                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ row.treatment }}">{{ row.treatment or 'N/A' }}</td>
+                                    <td>{{ row.age }}</td>
+                                    <td>{{ row.sex }}</td>
                                     <td>{{ row.admission_datetime.strftime('%Y-%m-%d %H:%M') if row.admission_datetime else 'N/A' }}</td>
                                     <td>{{ row.discharge_datetime.strftime('%Y-%m-%d %H:%M') if row.discharge_datetime else 'N/A' }}</td>
                                 {% elif report_type == 'wards' %}

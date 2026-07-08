@@ -938,3 +938,15 @@ textarea.form-control {
     color: var(--text-main) !important;
 }
 
+
+@media print {
+    @page {
+        margin: 0.5cm;
+    }
+    body {
+        margin: 0;
+    }
+    .no-print {
+        display: none !important;
+    }
+}

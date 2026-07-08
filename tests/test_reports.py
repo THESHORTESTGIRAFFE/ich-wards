@@ -70,5 +70,5 @@ def test_reports_patients(client, app):
     response = client.get('/reports?type=patients')
     assert response.status_code == 200
     assert b'Doe, Jane' in response.data
-    assert b'Admission Date' in response.data
-    assert b'Discharge Date' in response.data
+    assert b'Date of Admission' in response.data
+    assert b'Date of Discharge' in response.data

@@ -116,6 +116,8 @@ def seed_data():
                 # If admitted, assign a ward
                 if patient.status == 'Admitted':
                     patient.ward_id = random.choice(wards).id
+                elif patient.status == 'Discharged':
+                    patient.discharge_datetime = datetime.now()
                 
                 db.session.add(patient)
         
